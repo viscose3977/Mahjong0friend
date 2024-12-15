@@ -401,36 +401,56 @@ namespace MahjongGame
             }
 
             // 達成通關條件後的處理
-            Console.WriteLine("\n已達成通關條件，是否繼續留在本關卡？(Y/N)");
-            string choice = Console.ReadLine().ToUpper();
-
-            if (choice == "Y")
+            if (level == 6)  // 在第六關
             {
-                isRichi = false;
-                isDoubleRiichi = false;
-                hasWon = true;
-                richiCount = 0;
-                ResetDoraIndicators();  // 重置寶牌指示牌順序
-                return;
+                Console.WriteLine("\n已達成通關條件，是否繼續留在本關卡？(Y/N)");
+                string choice = Console.ReadLine().ToUpper();
+
+                if (choice == "Y")
+                {
+                    isRichi = false;
+                    isDoubleRiichi = false;
+                    hasWon = true;
+                    richiCount = 0;
+                    ResetDoraIndicators();
+                    return;
+                }
+                else
+                {
+                    ShowGameClearScreen();  // 顯示通關畫面
+                }
             }
-
-
-            Console.WriteLine("\n是否進入下一關卡？(Y/N)");
-            choice = Console.ReadLine().ToUpper();
-
-            if (choice == "Y")
+            else  // 其他關卡
             {
-                level++; // 進入下一關
-                ResetGame();
-            }
-            else
-            {
-                Console.WriteLine("\n感謝遊玩，即將退出遊戲...");
-                Console.ReadKey();
-                Environment.Exit(0);
+                Console.WriteLine("\n已達成通關條件，是否繼續留在本關卡？(Y/N)");
+                string choice = Console.ReadLine().ToUpper();
+
+                if (choice == "Y")
+                {
+                    isRichi = false;
+                    isDoubleRiichi = false;
+                    hasWon = true;
+                    richiCount = 0;
+                    ResetDoraIndicators();
+                    return;
+                }
+
+                Console.WriteLine("\n是否進入下一關卡？(Y/N)");
+                choice = Console.ReadLine().ToUpper();
+
+                if (choice == "Y")
+                {
+                    level++; // 進入下一關
+                    ResetGame();
+                }
+                else
+                {
+                    Console.WriteLine("\n感謝遊玩，即將退出遊戲...");
+                    Console.ReadKey();
+                    Environment.Exit(0);
+                }
             }
         }
-
         private void ResetDoraIndicators()
         {
             Console.WriteLine($"Debug: 重置前的寶牌 = {string.Join(", ", doraIndicators)}");
@@ -661,6 +681,20 @@ namespace MahjongGame
             {
                 Console.WriteLine("無法返回上一步，這是遊戲的初始狀態。");
             }
+        }
+
+        private void ShowGameClearScreen()
+        {
+            Console.Clear();  // 清空畫面
+            Console.WriteLine("   _____     _____     _____     _____     _____     _____     _____     _____");
+            Console.WriteLine("  /_____/|  /_____/|  /_____/|  /_____/|  /_____/|  /_____/|  /_____/|  /_____/|");
+            Console.WriteLine(" |     | | |     | | |     | | |     | | |     | | |     | | |     | | |     | |");
+            Console.WriteLine(" | 恭  | | | 喜  | | | 通  | | | 關  | | | 孤  | | | 兒  | | | 日  | | | 麻  | |");
+            Console.WriteLine(" |     | | |     | | |     | | |     | | |     | | |     | | |     | | |     | |");
+            Console.WriteLine(" |-----|/  |-----|/  |-----|/  |-----|/  |-----|/  |-----|/  |-----|/  |-----|/");
+            Console.WriteLine("\n遊戲結束，恭喜通關，也感謝您的耐心遊玩！");
+            Console.ReadKey();
+            Environment.Exit(0);
         }
     }
 }

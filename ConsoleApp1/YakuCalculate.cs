@@ -1,4 +1,5 @@
-﻿using System;
+﻿//YakuCalculate.cs
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -354,7 +355,7 @@ namespace MahjongGame
             return Math.Min(6, multiplier);
         }
 
-        private void DisplayYakumanStatus(int han)
+        private void DisplayYakumanStatus(int han) //我忘了為甚麼寫 反正先不刪掉
         {
             int yakumanMultiplier = CalculateYakumanMultiplier();
             if (yakumanMultiplier > 0)

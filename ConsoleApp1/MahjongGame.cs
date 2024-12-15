@@ -1,5 +1,4 @@
-﻿//MahjongGame.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -200,7 +199,14 @@ namespace MahjongGame
                 Console.WriteLine("4. 槓");
                 if (levelCompleted)
                 {
-                    Console.WriteLine("5. 進入下一關");
+                    if (level == 6)  // 在第六關
+                    {
+                        Console.WriteLine("5. 結束遊戲");
+                    }
+                    else  // 其他關卡
+                    {
+                        Console.WriteLine("5. 進入下一關");
+                    }
                 }
 
                 // 讀取玩家輸入
@@ -243,15 +249,22 @@ namespace MahjongGame
                     case 4: // 槓牌
                         DeclareKang();  // 直接調用 DeclareKang，讓它處理所有槓牌相關的邏輯
                         break;
-                    case 5: // 下一關卡
+                    case 5: // 下一關卡或結束遊戲
                         if (levelCompleted)
                         {
-                            Console.WriteLine("\n正在初始化下一關卡...");
-                            Console.WriteLine("\n按任意鍵繼續...");
-                            Console.ReadKey();
-                            level++;
-                            levelCompleted = false;
-                            InitializeNewLevel();
+                            if (level == 6)  // 在第六關
+                            {
+                                ShowGameClearScreen();  // 顯示通關畫面並結束遊戲
+                            }
+                            else  // 其他關卡
+                            {
+                                Console.WriteLine("\n正在初始化下一關卡...");
+                                Console.WriteLine("\n按任意鍵繼續...");
+                                Console.ReadKey();
+                                level++;
+                                levelCompleted = false;
+                                InitializeNewLevel();
+                            }
                         }
                         break;
                     default:
@@ -283,7 +296,6 @@ namespace MahjongGame
                     Console.WriteLine($"通關狀態：{(levelCompleted ? "已達成" : "未達成")}");
                     Console.WriteLine();
 
-                    // 檢查是否達成通關條件
                     if (!levelCompleted)
                     {
                         Console.WriteLine("\n偵測到玩家未達成通關條件，獲得成就：【菜就多練】");
@@ -293,22 +305,29 @@ namespace MahjongGame
                     }
                     else
                     {
-                        // 已達成通關條件，詢問是否進入下一關
-                        Console.WriteLine("\n是否進入下一關卡？(Y/N)");
-                        string nextLevelChoice = Console.ReadLine().ToUpper();
-
-                        if (nextLevelChoice == "Y")
+                        if (level == 6)  // 第六關特殊處理
                         {
-                            level++; // 進入下一關
-                            ResetGame();
-                            PlayGame();  // 直接開始新的一局
-                            return;
+                            ShowGameClearScreen();  // 直接顯示通關畫面
                         }
-                        else
+                        else  // 其他關卡
                         {
-                            Console.WriteLine("\n感謝遊玩，即將退出遊戲...");
-                            Console.ReadKey();
-                            Environment.Exit(0);
+                            // 已達成通關條件，詢問是否進入下一關
+                            Console.WriteLine("\n是否進入下一關卡？(Y/N)");
+                            string nextLevelChoice = Console.ReadLine().ToUpper();
+
+                            if (nextLevelChoice == "Y")
+                            {
+                                level++; // 進入下一關
+                                ResetGame();
+                                PlayGame();  // 直接開始新的一局
+                                return;
+                            }
+                            else
+                            {
+                                Console.WriteLine("\n感謝遊玩，即將退出遊戲...");
+                                Console.ReadKey();
+                                Environment.Exit(0);
+                            }
                         }
                     }
                 }
