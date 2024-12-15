@@ -126,7 +126,7 @@ namespace MahjongGame
 
             // 顯示已槓的牌
             Console.WriteLine("\n已槓牌：" + (kangTiles.Any() ? string.Join(" ", kangTiles) : "無"));
-
+            Console.WriteLine($"聽牌：{(IsTenpai() ? "有" : "無")}");
             // 顯示手牌
             Console.WriteLine("\n目前手牌：");
 

@@ -1,5 +1,4 @@
-﻿//YakuCalculate.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,6 +6,151 @@ namespace MahjongGame
 {
     public partial class MahjongGame
     {
+        private bool IsTenpai()
+        {
+            foreach (string discardTile in playerHand)
+            {
+                var testHand = new List<string>(playerHand);
+                testHand.Remove(discardTile);
+
+                foreach (string newTile in GetPossibleWaitingTiles(testHand))
+                {
+                    testHand.Add(newTile);
+                    testHand.Sort();
+
+                    var originalHand = new List<string>(playerHand);
+                    playerHand = testHand;
+
+                    // 在檢查聽牌時不計算寶牌
+                    var yakuList = GetYakuList(checkDora: false);
+
+                    playerHand = originalHand;
+
+                    if (yakuList.Any())
+                    {
+                        return true;
+                    }
+
+                    testHand.Remove(newTile);
+                }
+            }
+            return false;
+        }
+
+        // 檢查是否只差一張就能和牌（基本型）
+        private bool IsOneAwayFromComplete()
+        {
+            var tiles = new List<string>(playerHand);
+            tiles.Sort();
+
+            // 優化1：使用字典記錄已經檢查過的牌型
+            var checkedPatterns = new HashSet<string>();
+
+            // 優化2：只檢查實際可能的進張
+            foreach (var tile in GetPossibleWaitingTiles(tiles))
+            {
+                // 創建包含待測試牌的手牌
+                var testHand = new List<string>(tiles);
+                testHand.Add(tile);
+                testHand.Sort();
+
+                // 優化3：使用字串來表示牌型，避免重複檢查
+                string pattern = string.Join(",", testHand);
+                if (checkedPatterns.Contains(pattern))
+                {
+                    continue;
+                }
+                checkedPatterns.Add(pattern);
+
+                // 檢查是否能和牌
+                if (IsBasicWinningHand(testHand))
+                {
+                    // 檢查是否有役
+                    if (HasYaku(testHand))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        // 獲取可能的待牌
+        private List<string> GetPossibleWaitingTiles(List<string> hand)
+        {
+            var waitingTiles = new HashSet<string>();
+
+            // 1. 對子待牌
+            for (int i = 0; i < hand.Count; i++)
+            {
+                waitingTiles.Add(hand[i]);
+            }
+
+            // 2. 順子待牌（數牌）
+            for (int i = 0; i < hand.Count; i++)
+            {
+                if (IsNumberTile(hand[i]))
+                {
+                    var (num, suit) = GetNumberAndType(hand[i]);
+
+                    // 兩張連續牌等待中間的牌
+                    if (i < hand.Count - 1 && IsNumberTile(hand[i + 1]))
+                    {
+                        var (nextNum, nextSuit) = GetNumberAndType(hand[i + 1]);
+                        if (suit == nextSuit && nextNum == num + 2)
+                        {
+                            waitingTiles.Add($"{num + 1}{suit}");
+                        }
+                    }
+
+                    // 邊張待牌
+                    if (num == 1 || num == 2) waitingTiles.Add($"{num + 2}{suit}");
+                    if (num == 8 || num == 9) waitingTiles.Add($"{num - 2}{suit}");
+                }
+            }
+
+            // 3. 刻子待牌
+            var tileCount = new Dictionary<string, int>();
+            foreach (var tile in hand)
+            {
+                if (!tileCount.ContainsKey(tile))
+                    tileCount[tile] = 0;
+                tileCount[tile]++;
+            }
+
+            // 如果有兩張相同的牌，等待第三張
+            foreach (var pair in tileCount)
+            {
+                if (pair.Value == 2)
+                {
+                    waitingTiles.Add(pair.Key);
+                }
+            }
+
+            return waitingTiles.ToList();
+        }
+
+
+        // 檢查指定手牌是否有役（不含寶牌）
+        private bool HasYaku(List<string> hand)
+        {
+            // 臨時保存原始手牌
+            var originalHand = new List<string>(playerHand);
+
+            // 暫時替換手牌進行檢查
+            playerHand = new List<string>(hand);
+
+            // 獲取役種列表
+            var yakuList = GetYakuList();
+
+            // 恢復原始手牌
+            playerHand = originalHand;
+
+            // 檢查是否有任何役種
+            return yakuList.Any();
+        }
+
         private int CalculateHan()
         {
             try
@@ -353,24 +497,6 @@ namespace MahjongGame
 
             this.yakumanYakuList = yakumanList;
             return Math.Min(6, multiplier);
-        }
-
-        private void DisplayYakumanStatus(int han) //我忘了為甚麼寫 反正先不刪掉
-        {
-            int yakumanMultiplier = CalculateYakumanMultiplier();
-            if (yakumanMultiplier > 0)
-            {
-                if (yakumanMultiplier == 1)
-                    Console.WriteLine("役滿！");
-                else if (yakumanMultiplier == 2)
-                    Console.WriteLine("兩倍役滿！");
-                else
-                    Console.WriteLine($"{yakumanMultiplier}倍役滿！");
-            }
-            else if (han >= 13)
-            {
-                Console.WriteLine("累積役滿！");
-            }
         }
     }
 }

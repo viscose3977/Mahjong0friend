@@ -126,6 +126,12 @@ namespace MahjongGame
                 Console.WriteLine("已經立直！");
                 return;
             }
+            if (!IsTenpai())
+            {
+                Console.WriteLine("未聽牌，無法立直！");
+                //todo假立直
+                return;
+            }
 
             // 檢查點數是否足夠
             if (playerPoints < 1000)
@@ -282,7 +288,6 @@ namespace MahjongGame
 
         private void CompleteHand()
         {
-
             if (hasWon)
             {
                 Console.WriteLine("該牌型已和過牌，無法再次和牌。");
@@ -291,26 +296,38 @@ namespace MahjongGame
                 Console.ReadKey();
                 return;
             }
-            // 1. 先取得役種列表
+
+            // 1. 先檢查基本和牌型
+            if (!IsBasicWinningHand(playerHand))
+            {
+                // 如果不是基本和牌型，檢查是否為特殊和牌型（七對子等）
+                // TODO: 添加特殊和牌型檢查
+                // 如果都不是，則和牌失敗
+                InvalidWinAttempt();
+                return;
+            }
+
+            // 2. 取得役種列表
             List<(string name, int value)> yakuList = GetYakuList();
 
-            // 2. 檢查是否有役種（包含立直）
+            // 3. 檢查是否有役種（包含立直）
             if (!yakuList.Any())
             {
                 InvalidWinAttempt();
                 return;
             }
 
-            // 3. 確認和牌
+            // 4. 確認和牌
             hasWon = true;
 
-            // 4. 計算分數
+
+            // 5. 計算分數
             int yakumanMultiplier = CalculateYakumanMultiplier();
             int basePoints = yakumanMultiplier > 0 ?
                 48000 * yakumanMultiplier :
                 CalculateBasePoints(yakuList.Sum(y => y.value), CalculateFu());
 
-            // 5. 計算立直點數
+            // 6. 計算立直點數
             int points = basePoints;
             int richiPoints = 0;
             if (isRichi)
@@ -318,7 +335,7 @@ namespace MahjongGame
                 richiPoints = 1000 * richiCount;
                 points += richiPoints;
             }
-            // 6. 顯示和牌結果
+            // 7. 顯示和牌結果
             if (yakumanMultiplier > 0)
             {
                 // 役滿的情況
@@ -350,7 +367,7 @@ namespace MahjongGame
                 }
                 Console.WriteLine($"{yakuList.Sum(y => y.value)}番{CalculateFu()}符");
             }
-            // 顯示點數資訊
+            // 8.顯示點數資訊
             Console.WriteLine($"\n獲得 {points}點");
             if (richiPoints > 0)
             {
@@ -358,7 +375,7 @@ namespace MahjongGame
             }
             Console.WriteLine($"目前共有 {playerPoints}點\n");
 
-            // 9. 記錄和牌資訊（移到這裡）
+            // 9. 記錄和牌資訊
             string record = "和牌 - ";
             if (yakumanMultiplier > 0)
             {
@@ -377,7 +394,7 @@ namespace MahjongGame
             record += $", 獲得：{points}點";
             winningRecord.Add(record);
 
-            // 顯示關卡資訊
+            // 10.顯示關卡資訊
             Console.WriteLine($"本關{GetLevelObjective()}");
             Console.WriteLine("本關和牌紀錄：");
             if (winningRecord.Any())
@@ -393,7 +410,7 @@ namespace MahjongGame
             }
 
 
-            // 10. 檢查關卡完成
+            // 11. 檢查關卡完成
             if (!levelCompleted)
             {
                 levelCompleted = CheckLevelComplete(yakuList.Sum(y => y.value), CalculateFu());
@@ -523,9 +540,9 @@ namespace MahjongGame
             return "";
         }
 
-        private List<(string name, int value)> GetYakuList()
+        private List<(string name, int value)> GetYakuList(bool checkDora = true)
         {
-            var yakuList = new List<(string name, int value)>();
+            List<(string name, int value)> yakuList = new List<(string name, int value)>();
             bool hasYakuman = false;
 
             // 檢查所有役滿，不要提前返回
@@ -633,20 +650,23 @@ namespace MahjongGame
             // 六飜
             if (IsChinitsu()) yakuList.Add(("清一色", 6));
 
-            // 寶牌相關
-            // 1. 赤寶牌
-            int redDora = playerHand.Count(t => t.Contains("赤"));
-            if (redDora > 0) yakuList.Add(($"赤寶牌(*{redDora})", redDora));
-
-            // 2. 一般寶牌
-            int normalDora = CalculateDoraCount();
-            if (normalDora > 0) yakuList.Add(($"明寶牌(*{normalDora})", normalDora));
-
-            // 3. 裏寶牌（只有立直時才計算）
-            if (isRichi)
+            // 計算寶牌
+            if (checkDora)
             {
-                int uraDora = CalculateUraDoraCount();
-                if (uraDora > 0) yakuList.Add(($"裏寶牌(*{uraDora})", uraDora));
+                // 1. 赤寶牌
+                int redDora = playerHand.Count(t => t.Contains("赤"));
+                if (redDora > 0) yakuList.Add(($"赤寶牌(*{redDora})", redDora));
+
+                // 2. 一般寶牌
+                int normalDora = CalculateDoraCount();
+                if (normalDora > 0) yakuList.Add(($"明寶牌(*{normalDora})", normalDora));
+
+                // 3. 裏寶牌（只有立直時才計算）
+                if (isRichi)
+                {
+                    int uraDora = CalculateUraDoraCount();
+                    if (uraDora > 0) yakuList.Add(($"裏寶牌(*{uraDora})", uraDora));
+                }
             }
 
             return yakuList;
