@@ -307,6 +307,7 @@ namespace MahjongGame
                     {
                         if (level == 6)  // 第六關特殊處理
                         {
+                            Console.ReadKey();
                             ShowGameClearScreen();  // 直接顯示通關畫面
                         }
                         else  // 其他關卡

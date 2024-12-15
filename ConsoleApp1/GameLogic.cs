@@ -686,13 +686,24 @@ namespace MahjongGame
         private void ShowGameClearScreen()
         {
             Console.Clear();  // 清空畫面
-            Console.WriteLine("   _____     _____     _____     _____     _____     _____     _____     _____");
-            Console.WriteLine("  /_____/|  /_____/|  /_____/|  /_____/|  /_____/|  /_____/|  /_____/|  /_____/|");
-            Console.WriteLine(" |     | | |     | | |     | | |     | | |     | | |     | | |     | | |     | |");
-            Console.WriteLine(" | 恭  | | | 喜  | | | 通  | | | 關  | | | 孤  | | | 兒  | | | 日  | | | 麻  | |");
-            Console.WriteLine(" |     | | |     | | |     | | |     | | |     | | |     | | |     | | |     | |");
-            Console.WriteLine(" |-----|/  |-----|/  |-----|/  |-----|/  |-----|/  |-----|/  |-----|/  |-----|/");
-            Console.WriteLine("\n遊戲結束，恭喜通關，也感謝您的耐心遊玩！");
+            Console.WriteLine();
+            Console.WriteLine("   _____     _____     _____     _____  ");
+            Console.WriteLine("  /_____/|  /_____/|  /_____/|  /_____/|");
+            Console.WriteLine(" |     | | |     | | |     | | |     | |       |\\      _,,,---,,_");
+            Console.WriteLine(" | 恭  | | | 喜  | | | 通  | | | 關  | | ZZZzz /,`.-'`'    -.  ;-;;,_");
+            Console.WriteLine(" |     | | |     | | |     | | |     | |      |,4-  ) )-,_. ,\\ (  `'-'");
+            Console.WriteLine(" |-----|/  |-----|/  |-----|/  |-----|/     '---''(_/--'  `-'\\_)");
+            Console.WriteLine("                               _____     _____     _____     _____");
+            Console.WriteLine("                              /_____/|  /_____/|  /_____/|  /_____/|");
+            Console.WriteLine("                             |     | | |     | | |     | | |     | |");
+            Console.WriteLine("                             | 孤  | | | 兒  | | | 日  | | | 麻  | |");
+            Console.WriteLine("                             |     | | |     | | |     | | |     | |");
+            Console.WriteLine("                             |-----|/  |-----|/  |-----|/  |-----|/");
+            Console.WriteLine();
+            Console.WriteLine("\n遊戲結束！");
+            Console.WriteLine("恭喜通關，也感謝您的耐心遊玩！");
+            Console.WriteLine("按下任意鍵離開遊戲...");
+            Console.WriteLine();
             Console.ReadKey();
             Environment.Exit(0);
         }
