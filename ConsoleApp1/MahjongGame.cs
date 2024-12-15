@@ -383,6 +383,7 @@ namespace MahjongGame
             hasWon = false;
             kangCount = 0;
             isFirstRound = true;
+            levelCompleted = false;
         }
 
         // 新增初始化新關卡的方法

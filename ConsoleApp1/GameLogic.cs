@@ -335,7 +335,7 @@ namespace MahjongGame
             }
             else
             {
-                // 一般和牌的情況保持不變
+                // 一般和牌的情況
                 Console.WriteLine("\n和牌！ - ");
                 foreach (var yaku in yakuList)
                 {
@@ -349,19 +349,16 @@ namespace MahjongGame
                     Console.Write($"{rankName} ");
                 }
                 Console.WriteLine($"{yakuList.Sum(y => y.value)}番{CalculateFu()}符");
-                Console.WriteLine($"\n獲得 {basePoints}點");
             }
-
+            // 顯示點數資訊
+            Console.WriteLine($"\n獲得 {points}點");
             if (richiPoints > 0)
             {
                 Console.WriteLine($"歸還立直點 {richiPoints}點");
             }
+            Console.WriteLine($"目前共有 {playerPoints}點\n");
 
-            // 8. 更新玩家分數
-            playerPoints += points;
-            Console.WriteLine($"目前共有 {playerPoints}點");
-
-            // 9. 記錄和牌資訊
+            // 9. 記錄和牌資訊（移到這裡）
             string record = "和牌 - ";
             if (yakumanMultiplier > 0)
             {
@@ -379,6 +376,22 @@ namespace MahjongGame
             }
             record += $", 獲得：{points}點";
             winningRecord.Add(record);
+
+            // 顯示關卡資訊
+            Console.WriteLine($"本關{GetLevelObjective()}");
+            Console.WriteLine("本關和牌紀錄：");
+            if (winningRecord.Any())
+            {
+                foreach (var previousRecord in winningRecord)
+                {
+                    Console.WriteLine(previousRecord);
+                }
+            }
+            else
+            {
+                Console.WriteLine("無");
+            }
+
 
             // 10. 檢查關卡完成
             if (!levelCompleted)
@@ -627,8 +640,7 @@ namespace MahjongGame
 
             // 2. 一般寶牌
             int normalDora = CalculateDoraCount();
-            if (normalDora > 0) yakuList.Add(($" " +
-                $"明寶牌(*{normalDora})", normalDora));
+            if (normalDora > 0) yakuList.Add(($"明寶牌(*{normalDora})", normalDora));
 
             // 3. 裏寶牌（只有立直時才計算）
             if (isRichi)
@@ -638,49 +650,6 @@ namespace MahjongGame
             }
 
             return yakuList;
-        }
-
-
-
-        private void SaveGameState()
-        {
-            gameStateHistory.Push(new GameState
-            {
-                PlayerHand = new List<string>(playerHand),
-                DiscardedTiles = new List<string>(discardedTiles),
-                PlayerPoints = playerPoints,
-                IsRichi = isRichi,
-                HasWon = hasWon,
-                RichiCount = richiCount,
-                KangCount = kangCount,
-                IsFirstRound = isFirstRound,
-                Level = level,
-                LevelCompleted = levelCompleted,
-                IsDoubleRiichi = isDoubleRiichi
-            });
-        }
-
-        private void RestoreGameState()
-        {
-            if (gameStateHistory.Count > 0)
-            {
-                var previousState = gameStateHistory.Pop();
-                playerHand = previousState.PlayerHand;
-                discardedTiles = previousState.DiscardedTiles;
-                playerPoints = previousState.PlayerPoints;
-                isRichi = previousState.IsRichi;
-                hasWon = previousState.HasWon;
-                richiCount = previousState.RichiCount;
-                kangCount = previousState.KangCount;
-                isFirstRound = previousState.IsFirstRound;
-                level = previousState.Level;
-                levelCompleted = previousState.LevelCompleted;
-                isDoubleRiichi = previousState.IsDoubleRiichi;
-            }
-            else
-            {
-                Console.WriteLine("無法返回上一步，這是遊戲的初始狀態。");
-            }
         }
 
         private void ShowGameClearScreen()
@@ -702,8 +671,8 @@ namespace MahjongGame
             Console.WriteLine();
             Console.WriteLine("\n遊戲結束！");
             Console.WriteLine("恭喜通關，也感謝您的耐心遊玩！");
-            Console.WriteLine("按下任意鍵離開遊戲...");
             Console.WriteLine();
+            Console.WriteLine("按下任意鍵離開遊戲...");
             Console.ReadKey();
             Environment.Exit(0);
         }
