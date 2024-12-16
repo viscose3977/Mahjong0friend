@@ -9,21 +9,17 @@ namespace MahjongGame
         // 基本和牌型判定（一般型：順子、刻子、雀頭組合）
         public static bool IsBasicWinningHand(List<string> hand)
         {
-            // 先排序手牌
             var sortedHand = new List<string>(hand);
             sortedHand.Sort();
 
-            // 找出所有可能的雀頭組合
             for (int i = 0; i < sortedHand.Count - 1; i++)
             {
-                if (sortedHand[i] == sortedHand[i + 1])  // 找到可能的雀頭
+                if (sortedHand[i] == sortedHand[i + 1])
                 {
-                    // 複製一個不含雀頭的手牌列表
                     var remainingTiles = new List<string>(sortedHand);
                     remainingTiles.RemoveAt(i + 1);
                     remainingTiles.RemoveAt(i);
 
-                    // 檢查剩餘的牌是否可以組成4組順子或刻子
                     if (CanFormMentsu(remainingTiles))
                     {
                         return true;
@@ -33,93 +29,78 @@ namespace MahjongGame
             return false;
         }
 
-        // 檢查是否能組成面子（順子或刻子）
         private static bool CanFormMentsu(List<string> tiles)
         {
-            if (tiles.Count == 0) return true;  // 所有牌都已經組成面子
+            if (tiles.Count == 0) return true;
 
-            // 嘗試組成刻子
-            if (tiles.Count >= 3 && tiles[0] == tiles[1] && tiles[1] == tiles[2])
+            tiles.Sort();
+
+            // 1. 先嘗試順子
+            for (int i = 0; i < tiles.Count - 2; i++)
             {
-                var remaining = new List<string>(tiles);
-                remaining.RemoveRange(0, 3);
-                if (CanFormMentsu(remaining)) return true;
+                if (!IsNumberTile(tiles[i])) continue;
+
+                var (num1, suit1) = GetNumberAndType(tiles[i]);
+
+                string tile2 = GetTileString(num1 + 1, suit1);
+                string tile3 = GetTileString(num1 + 2, suit1);
+
+                if (tiles.Contains(tile2) && tiles.Contains(tile3))
+                {
+                    var remaining = new List<string>(tiles);
+                    remaining.Remove(tiles[i]);
+                    remaining.Remove(tile2);
+                    remaining.Remove(tile3);
+                    if (CanFormMentsu(remaining)) return true;
+                }
             }
 
-            // 嘗試組成順子（只適用於數牌）
-            if (tiles.Count >= 3 && IsSequential(tiles[0], tiles[1], tiles[2]))
+            // 2. 再嘗試刻子
+            for (int i = 0; i < tiles.Count - 2; i++)
             {
-                var remaining = new List<string>(tiles);
-                remaining.Remove(tiles[0]);
-                remaining.Remove(tiles[1]);
-                remaining.Remove(tiles[2]);
-                if (CanFormMentsu(remaining)) return true;
+                if (tiles[i] == tiles[i + 1] && tiles[i + 1] == tiles[i + 2])
+                {
+                    var remaining = new List<string>(tiles);
+                    remaining.RemoveAt(i + 2);
+                    remaining.RemoveAt(i + 1);
+                    remaining.RemoveAt(i);
+                    if (CanFormMentsu(remaining)) return true;
+                }
             }
 
             return false;
         }
-
-        // 檢查三張牌是否為順子
-        private static bool IsSequential(string tile1, string tile2, string tile3)
+        private static bool IsHonor(string type)
         {
-            // 檢查是否為數牌
-            if (!IsNumberTile(tile1) || !IsNumberTile(tile2) || !IsNumberTile(tile3))
-                return false;
-
-            // 取得數字和種類
-            var (num1, type1) = GetNumberAndType(tile1);
-            var (num2, type2) = GetNumberAndType(tile2);
-            var (num3, type3) = GetNumberAndType(tile3);
-
-            // 檢查是否同一種類且連續
-            return type1 == type2 && type2 == type3 &&
-                   num2 == num1 + 1 && num3 == num2 + 1;
+            return type == "東" || type == "南" || type == "西" || type == "北" ||
+                   type == "白" || type == "發" || type == "中";
         }
+
 
         // 判斷是否為數牌
         private static bool IsNumberTile(string tile)
         {
-            return tile.Contains("萬") || tile.Contains("筒") || tile.Contains("索");
+            return tile.EndsWith("萬") || tile.EndsWith("餅") || tile.EndsWith("索");
         }
 
-        // 從牌名中提取數字和種類
         private static (int number, string type) GetNumberAndType(string tile)
         {
-            // 處理赤五萬的情況
             if (tile.StartsWith("赤五"))
-            {
                 return (5, tile.Substring(2));
-            }
 
-            // 處理字牌的情況
-            if (tile == "東" || tile == "南" || tile == "西" || tile == "北" ||
-                tile == "白" || tile == "發" || tile == "中")
+            string[] numbers = { "一", "二", "三", "四", "五", "六", "七", "八", "九" };
+            for (int i = 0; i < numbers.Length; i++)
             {
-                return (0, tile);  // 字牌的數字部分用0表示
+                if (tile.StartsWith(numbers[i]))
+                {
+                    return (i + 1, tile.Substring(numbers[i].Length));
+                }
             }
 
-            // 一般數牌
-            string number = tile.Substring(0, 1);
-            string type = tile.Substring(1);
-
-            // 將中文數字轉換為阿拉伯數字
-            Dictionary<string, int> numberMap = new Dictionary<string, int>
-    {
-        {"一", 1}, {"二", 2}, {"三", 3}, {"四", 4}, {"五", 5},
-        {"六", 6}, {"七", 7}, {"八", 8}, {"九", 9},
-        // 添加阿拉伯數字的對應
-        {"1", 1}, {"2", 2}, {"3", 3}, {"4", 4}, {"5", 5},
-        {"6", 6}, {"7", 7}, {"8", 8}, {"9", 9}
-    };
-
-            // 安全的檢查和轉換
-            if (!numberMap.ContainsKey(number))
-            {
-                throw new Exception($"無效的牌面數字：{number}，完整牌面：{tile}");
-            }
-
-            return (numberMap[number], type);
+            return (0, tile);
         }
+
+        
         private bool IsPinfu()//平和
         {
             if (discardedTiles.Any()) return false; // 必須門清
@@ -583,7 +564,7 @@ namespace MahjongGame
             return result;
         }
 
-        private string GetNextNumber(string number)
+        private static string GetNextNumber(string number)
         {
             string[] numbers = { "一", "二", "三", "四", "五", "六", "七", "八", "九" };
             int index = Array.IndexOf(numbers, number);

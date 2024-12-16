@@ -110,7 +110,7 @@ namespace MahjongGame
 
         private void DeclareRiichi()
         {
-            // 首先檢查是否已和牌
+            // 1. 基本檢查
             if (hasWon)
             {
                 Console.WriteLine("該牌型已和過牌，無法再次立直。");
@@ -120,36 +120,58 @@ namespace MahjongGame
                 return;
             }
 
-            // 檢查是否已經立直
             if (isRichi)
             {
                 Console.WriteLine("已經立直！");
-                return;
-            }
-            if (!IsTenpai())
-            {
-                Console.WriteLine("未聽牌，無法立直！");
-                //todo假立直
+                Console.WriteLine("按任意鍵繼續...");
+                Console.ReadKey();
                 return;
             }
 
-            // 檢查點數是否足夠
+            // 2. 檢查點數是否足夠
             if (playerPoints < 1000)
             {
                 Console.WriteLine("點數不足，無法立直！");
+                Console.WriteLine("按任意鍵繼續...");
+                Console.ReadKey();
                 return;
             }
 
-            // 確認立直
+            // 3. 確認立直意願
             Console.WriteLine("確定要立直嗎？(Y/N)");
-            if (Console.ReadLine().ToUpper() == "Y")
+            if (Console.ReadLine().ToUpper() != "Y")
             {
-                playerPoints -= 1000; // 立直棒
-                richiCount++;
-                isRichi = true;
-                isDoubleRiichi = isFirstRound; // 如果是第一巡，則為雙立直
-                Console.WriteLine($"立直成功！當前點數：{playerPoints}");
+                Console.WriteLine("取消立直。");
+                return;
             }
+
+            // 4. 檢查是否真的聽牌
+            if (!IsTenpai())
+            {
+                Console.WriteLine("\n=== 假立直被抓到了！===");
+                Console.WriteLine("未聽牌，判定為假立直！");
+                Console.WriteLine("請仔細審視手牌，進行罰符4000點！");
+                DeductPoints(4000);
+                Console.WriteLine($"當前點數：{playerPoints}");
+                Console.WriteLine("按任意鍵繼續...");
+                Console.ReadKey();
+                return;
+            }
+
+            // 5. 執行立直
+            playerPoints -= 1000; // 立直棒
+            richiCount++;
+            isRichi = true;
+            isDoubleRiichi = isFirstRound; // 如果是第一巡，則為兩立直
+
+            // 6. 顯示結果
+            if (isDoubleRiichi)
+                Console.WriteLine("兩立直成功！");
+            else
+                Console.WriteLine("立直成功！");
+            Console.WriteLine($"當前點數：{playerPoints}");
+            Console.WriteLine("按任意鍵繼續...");
+            Console.ReadKey();
         }
         private void DeductPoints(int points)
         {
@@ -165,19 +187,6 @@ namespace MahjongGame
                 Environment.Exit(0);  // 直接結束程序
             }
         }
-
-        private void ReturnToMainMenu()
-        {
-            // 清空當前遊戲狀態
-            playerHand.Clear();
-            discardedTiles.Clear();
-            deck.Clear();
-            doraIndicators.Clear();
-            uraDoraIndicators.Clear();
-            winningRecord.Clear();
-
-            // 不需要做其他事，讓當前遊戲實例結束
-        }
         private void DeclareKang()
         {
             // 將手牌按類型分組，排除已經槓過的牌
@@ -188,8 +197,10 @@ namespace MahjongGame
 
             if (!kangGroups.Any())
             {
+                Console.WriteLine("\n=== 詐槓被抓到了！===");
                 Console.WriteLine("詐槓！請仔細審視手牌，進行罰符4000點！");
                 DeductPoints(4000);
+                Console.WriteLine($"當前點數：{playerPoints}");
                 Console.WriteLine("按任意鍵繼續...");
                 Console.ReadKey();
                 return;
@@ -242,6 +253,7 @@ namespace MahjongGame
 
         private void InvalidWinAttempt()
         {
+            Console.WriteLine("\n=== 詐和被抓到了！===");
             Console.WriteLine("無役詐和！請仔細審視手牌，進行罰符罰分4000點！");
             DeductPoints(4000);
             Console.WriteLine($"當前點數：{playerPoints}");
@@ -631,7 +643,7 @@ namespace MahjongGame
             if (IsIipeikou()) yakuList.Add(("一盃口", 1));
 
             // 二飜
-            if (isDoubleRiichi) yakuList.Add(("雙立直", 2));
+            if (isDoubleRiichi) yakuList.Add(("兩立直", 2));
             //缺三色同順
             if (IsIttsu()) yakuList.Add(("一氣通貫", 2));
             if (IsChanta()) yakuList.Add(("混全帶么九", 2));

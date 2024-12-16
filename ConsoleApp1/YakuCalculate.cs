@@ -13,126 +13,156 @@ namespace MahjongGame
                 var testHand = new List<string>(playerHand);
                 testHand.Remove(discardTile);
 
-                foreach (string newTile in GetPossibleWaitingTiles(testHand))
+                var waitingTiles = GetPossibleWaitingTiles(testHand);
+                if (waitingTiles.Any())
                 {
-                    testHand.Add(newTile);
-                    testHand.Sort();
-
-                    var originalHand = new List<string>(playerHand);
-                    playerHand = testHand;
-
-                    // 在檢查聽牌時不計算寶牌
-                    var yakuList = GetYakuList(checkDora: false);
-
-                    playerHand = originalHand;
-
-                    if (yakuList.Any())
-                    {
-                        return true;
-                    }
-
-                    testHand.Remove(newTile);
+                    Console.WriteLine($"打{discardTile}聽{string.Join("、", waitingTiles)}");
+                    return true;
                 }
             }
+
             return false;
         }
-
-        // 檢查是否只差一張就能和牌（基本型）
-        private bool IsOneAwayFromComplete()
+        private bool IsThirteenTilesReadyToWin(List<string> hand)
         {
-            var tiles = new List<string>(playerHand);
-            tiles.Sort();
+            if (hand.Count != 13) return false;
 
-            // 優化1：使用字典記錄已經檢查過的牌型
-            var checkedPatterns = new HashSet<string>();
+            // 1. 先檢查特殊役種聽牌（因為這些不需要等待特定牌）
+            var originalHand = new List<string>(playerHand);
+            playerHand = new List<string>(hand);
+            bool isSpecialWait = IsKokushi() || IsChitoitsu() || IsChuurenpoutou();
+            playerHand = originalHand;
 
-            // 優化2：只檢查實際可能的進張
-            foreach (var tile in GetPossibleWaitingTiles(tiles))
+            if (isSpecialWait) return true;
+
+            // 2. 檢查標準型聽牌
+            var waitingTiles = GetPossibleWaitingTiles(hand);
+            foreach (string newTile in waitingTiles)
             {
-                // 創建包含待測試牌的手牌
-                var testHand = new List<string>(tiles);
-                testHand.Add(tile);
+                var testHand = new List<string>(hand);
+                testHand.Add(newTile);
                 testHand.Sort();
 
-                // 優化3：使用字串來表示牌型，避免重複檢查
-                string pattern = string.Join(",", testHand);
-                if (checkedPatterns.Contains(pattern))
+                if (IsBasicWinningHand(testHand) && HasYaku(testHand))
                 {
-                    continue;
-                }
-                checkedPatterns.Add(pattern);
-
-                // 檢查是否能和牌
-                if (IsBasicWinningHand(testHand))
-                {
-                    // 檢查是否有役
-                    if (HasYaku(testHand))
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
 
             return false;
         }
-
         // 獲取可能的待牌
         private List<string> GetPossibleWaitingTiles(List<string> hand)
         {
             var waitingTiles = new HashSet<string>();
 
-            // 1. 對子待牌
-            for (int i = 0; i < hand.Count; i++)
+            // 特別處理順子待ち的情況
+            foreach (var tile1 in hand.Where(t => IsNumberTile(t)))
             {
-                waitingTiles.Add(hand[i]);
-            }
+                var (num1, suit1) = GetNumberAndType(tile1);
 
-            // 2. 順子待牌（數牌）
-            for (int i = 0; i < hand.Count; i++)
-            {
-                if (IsNumberTile(hand[i]))
+                foreach (var tile2 in hand.Where(t => t != tile1 && IsNumberTile(t)))
                 {
-                    var (num, suit) = GetNumberAndType(hand[i]);
+                    var (num2, suit2) = GetNumberAndType(tile2);
 
-                    // 兩張連續牌等待中間的牌
-                    if (i < hand.Count - 1 && IsNumberTile(hand[i + 1]))
+                    // 只處理相同花色的牌
+                    if (suit1 != suit2) continue;
+
+                    // 兩張牌相鄰的情況
+                    if (Math.Abs(num1 - num2) == 1)
                     {
-                        var (nextNum, nextSuit) = GetNumberAndType(hand[i + 1]);
-                        if (suit == nextSuit && nextNum == num + 2)
+                        int smaller = Math.Min(num1, num2);
+                        // 兩面待ち
+                        if (smaller > 1) // 檢查左邊的牌
                         {
-                            waitingTiles.Add($"{num + 1}{suit}");
+                            var waitTile = GetTileString(smaller - 1, suit1);
+                            var testHand = new List<string>(hand);
+                            testHand.Add(waitTile);
+                            if (IsBasicWinningHand(testHand))
+                            {
+                                waitingTiles.Add(waitTile);
+                            }
+                        }
+                        if (smaller + 2 < 10) // 檢查右邊的牌
+                        {
+                            var waitTile = GetTileString(smaller + 2, suit1);
+                            var testHand = new List<string>(hand);
+                            testHand.Add(waitTile);
+                            if (IsBasicWinningHand(testHand))
+                            {
+                                waitingTiles.Add(waitTile);
+                            }
                         }
                     }
 
-                    // 邊張待牌
-                    if (num == 1 || num == 2) waitingTiles.Add($"{num + 2}{suit}");
-                    if (num == 8 || num == 9) waitingTiles.Add($"{num - 2}{suit}");
-                }
-            }
-
-            // 3. 刻子待牌
-            var tileCount = new Dictionary<string, int>();
-            foreach (var tile in hand)
-            {
-                if (!tileCount.ContainsKey(tile))
-                    tileCount[tile] = 0;
-                tileCount[tile]++;
-            }
-
-            // 如果有兩張相同的牌，等待第三張
-            foreach (var pair in tileCount)
-            {
-                if (pair.Value == 2)
-                {
-                    waitingTiles.Add(pair.Key);
+                    // 間隔一張牌的情況（嵌張待ち）
+                    if (Math.Abs(num1 - num2) == 2)
+                    {
+                        var waitTile = GetTileString((num1 + num2) / 2, suit1);
+                        var testHand = new List<string>(hand);
+                        testHand.Add(waitTile);
+                        if (IsBasicWinningHand(testHand))
+                        {
+                            waitingTiles.Add(waitTile);
+                        }
+                    }
                 }
             }
 
             return waitingTiles.ToList();
         }
 
+        private List<string> GetSequenceWaits(List<string> hand)
+        {
+            var waits = new HashSet<string>();
 
-        // 檢查指定手牌是否有役（不含寶牌）
+            foreach (var tile in hand)
+            {
+                if (!IsNumberTile(tile)) continue;
+
+                var (num, suit) = GetNumberAndType(tile);
+
+                // 檢查兩張相鄰的牌
+                foreach (var tile2 in hand)
+                {
+                    if (tile == tile2) continue;
+                    var (num2, suit2) = GetNumberAndType(tile2);
+                    if (suit != suit2) continue;
+
+                    if (Math.Abs(num - num2) == 1)
+                    {
+                        // 順子兩面待ち
+                        int smaller = Math.Min(num, num2);
+                        if (smaller > 1) waits.Add(GetTileString(smaller - 1, suit));
+                        if (smaller + 1 < 9) waits.Add(GetTileString(smaller + 2, suit));
+                    }
+                    else if (Math.Abs(num - num2) == 2)
+                    {
+                        // 順子嵌張待ち
+                        int middle = (num + num2) / 2;
+                        waits.Add(GetTileString(middle, suit));
+                    }
+                }
+            }
+
+            return waits.ToList();
+        }
+
+        private List<string> GetTripletWaits(List<string> hand)
+        {
+            var waits = new HashSet<string>();
+            var groups = hand.GroupBy(x => x.Replace("赤", ""));
+
+            foreach (var group in groups)
+            {
+                if (group.Count() == 2)
+                {
+                    waits.Add(group.Key);
+                }
+            }
+
+            return waits.ToList();
+        }
         private bool HasYaku(List<string> hand)
         {
             // 臨時保存原始手牌
@@ -151,6 +181,13 @@ namespace MahjongGame
             return yakuList.Any();
         }
 
+
+        private static string GetTileString(int number, string suit)
+        {
+            string[] numbers = { "一", "二", "三", "四", "五", "六", "七", "八", "九" };
+            if (number < 1 || number > 9) return "";
+            return numbers[number - 1] + suit;
+        }
         private int CalculateHan()
         {
             try
@@ -167,7 +204,7 @@ namespace MahjongGame
                 if (IsIipeikou()) han += 1; // 一盃口
 
                 // 二飜
-                if (isDoubleRiichi) han += 2; // 雙立直
+                if (isDoubleRiichi) han += 2; // 兩立直
                 //缺三色同順
                 if (IsIttsu()) han += 2; // 一氣通貫
                 if (IsChanta()) han += 2; // 混全帶么九
@@ -489,7 +526,7 @@ namespace MahjongGame
                 multiplier += 1;
                 yakumanList.Add("天和");
             }
-            if (IsRyuuiisou())  // 新增綠一色判定
+            if (IsRyuuiisou())
             {
                 multiplier += 1;
                 yakumanList.Add("綠一色");
