@@ -100,7 +100,7 @@ namespace MahjongGame
             return (0, tile);
         }
 
-        
+
         private bool IsPinfu()//平和
         {
             if (discardedTiles.Any()) return false; // 必須門清
@@ -139,48 +139,102 @@ namespace MahjongGame
             return playerHand.All(tile => !IsYaochu(tile.Replace("赤", "")));
         }
 
-
-        private bool IsIipeikou()  // 一盃口
+        private bool IsIipeikou() //一盃口
         {
-            // 將手牌轉換為數字和花色的形式
-            var normalizedTiles = playerHand
-                .Select(t => t.Replace("*", "").Replace("赤", ""))
-                .ToList();
+            // 先按花色分組
+            var handBySuit = playerHand
+                .GroupBy(t => GetSuit(t.Replace("赤", "")))
+                .ToDictionary(g => g.Key, g => g.ToList());
 
-            // 找出所有順子
-            var sequences = new List<string>();
-            for (int i = 0; i < normalizedTiles.Count - 2; i++)
+            foreach (var suitGroup in handBySuit)
             {
-                string current = normalizedTiles[i];
-                if (!int.TryParse(current[0].ToString(), out int num)) continue;
-                string suit = current.Substring(1);
+                if (string.IsNullOrEmpty(suitGroup.Key)) continue;
 
-                if (normalizedTiles.Contains($"{num + 1}{suit}") &&
-                    normalizedTiles.Contains($"{num + 2}{suit}"))
+                var tiles = suitGroup.Value.Select(t => t.Replace("赤", "")).ToList();
+                var foundShuntsu = new List<(int start, string suit)>();
+
+                // 尋找所有可能的順子
+                for (int i = 1; i <= 7; i++)
                 {
-                    sequences.Add($"{num}-{num + 1}-{num + 2}{suit}");
+                    string tile1 = GetTileString(i, suitGroup.Key);
+                    string tile2 = GetTileString(i + 1, suitGroup.Key);
+                    string tile3 = GetTileString(i + 2, suitGroup.Key);
+
+                    // 計算每個牌的數量
+                    var remainingTiles = new List<string>(tiles);
+                    bool foundFirst = false;
+
+                    // 尋找第一組順子
+                    if (remainingTiles.Contains(tile1) &&
+                        remainingTiles.Contains(tile2) &&
+                        remainingTiles.Contains(tile3))
+                    {
+                        foundFirst = true;
+                        remainingTiles.Remove(tile1);
+                        remainingTiles.Remove(tile2);
+                        remainingTiles.Remove(tile3);
+
+                        // 在剩餘的牌中尋找相同的順子
+                        if (remainingTiles.Contains(tile1) &&
+                            remainingTiles.Contains(tile2) &&
+                            remainingTiles.Contains(tile3))
+                        {
+                            // 找到一盃口
+                            return true;
+                        }
+                    }
+
+                    if (!foundFirst)
+                    {
+                        continue;
+                    }
                 }
             }
 
-            // 檢查是否有兩組相同的順子
-            return sequences.GroupBy(s => s).Any(g => g.Count() >= 2);
-        }
-        private bool IsIttsu()  // 一氣通貫
-        {
-            var sequences = GetShuntsuList();  // 改用不同的變數名稱
-            string[] suits = { "萬", "餅", "索" };
-
-            foreach (string suit in suits)
-            {
-                if (sequences.Contains($"一{suit}") &&
-                    sequences.Contains($"四{suit}") &&
-                    sequences.Contains($"七{suit}"))
-                {
-                    return true;
-                }
-            }
             return false;
         }
+
+        private bool IsIttsu() //一氣通貫
+        {
+            // 按花色分組
+            var handBySuit = playerHand
+                .GroupBy(t => GetSuit(t.Replace("赤", "")))
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            foreach (var suitGroup in handBySuit)
+            {
+                if (string.IsNullOrEmpty(suitGroup.Key)) continue;
+
+                var tiles = suitGroup.Value.Select(t => t.Replace("赤", "")).ToList();
+                var remainingTiles = new List<string>(tiles);
+
+                // 檢查是否有 123
+                if (!HasShuntsu(remainingTiles, 1, suitGroup.Key)) continue;
+
+                // 檢查是否有 456
+                if (!HasShuntsu(remainingTiles, 4, suitGroup.Key)) continue;
+
+                // 檢查是否有 789
+                if (!HasShuntsu(remainingTiles, 7, suitGroup.Key)) continue;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        // 輔助方法：檢查(((特定順子)))是否存在
+        private bool HasShuntsu(List<string> tiles, int startNumber, string suit)
+        {
+            string tile1 = GetTileString(startNumber, suit);
+            string tile2 = GetTileString(startNumber + 1, suit);
+            string tile3 = GetTileString(startNumber + 2, suit);
+
+            return tiles.Contains(tile1) &&
+                   tiles.Contains(tile2) &&
+                   tiles.Contains(tile3);
+        }
+
 
         private bool IsChanta()//混全帶么九
         {
