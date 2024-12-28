@@ -70,5 +70,4 @@ public class Program  // 將 Program 放在全局命名空間
         Console.WriteLine("2. 退出遊戲");
         Console.Write("請選擇：");
     }
-
 }

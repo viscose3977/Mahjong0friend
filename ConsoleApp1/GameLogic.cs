@@ -108,72 +108,72 @@ namespace MahjongGame
             }
         }
 
-        private void DeclareRiichi()
-        {
-            // 1. 基本檢查
-            if (hasWon)
-            {
-                Console.WriteLine("該牌型已和過牌，無法再次立直。");
-                Console.WriteLine("請打出至少一張牌後再進行立直。");
-                Console.WriteLine("按任意鍵繼續...");
-                Console.ReadKey();
-                return;
-            }
+private void DeclareRiichi()
+{
+    // 1. 基本檢查
+    if (hasWon)
+    {
+        Console.WriteLine("該牌型已和過牌，無法再次立直。");
+        Console.WriteLine("請打出至少一張牌後再進行立直。");
+        Console.WriteLine("按任意鍵繼續...");
+        Console.ReadKey();
+        return;
+    }
 
-            if (isRichi || isDoubleRiichi)
-            {
-                Console.WriteLine("已經立直！");
-                Console.WriteLine("按任意鍵繼續...");
-                Console.ReadKey();
-                return;
-            }
+    if (isRichi || isDoubleRiichi)
+    {
+        Console.WriteLine("已經立直！");
+        Console.WriteLine("按任意鍵繼續...");
+        Console.ReadKey();
+        return;
+    }
 
-            // 2. 檢查點數是否足夠
-            if (playerPoints < 1000)
-            {
-                Console.WriteLine("點數不足，無法立直！");
-                Console.WriteLine("按任意鍵繼續...");
-                Console.ReadKey();
-                return;
-            }
+    // 2. 檢查點數是否足夠
+    if (playerPoints < 1000)
+    {
+        Console.WriteLine("點數不足，無法立直！");
+        Console.WriteLine("按任意鍵繼續...");
+        Console.ReadKey();
+        return;
+    }
 
-            // 3. 確認立直意願
-            Console.WriteLine("確定要立直嗎？(Y/N)");
-            if (Console.ReadLine().ToUpper() != "Y")
-            {
-                Console.WriteLine("取消立直。");
-                return;
-            }
+    // 3. 確認立直意願
+    Console.WriteLine("確定要立直嗎？(Y/N)");
+    if (Console.ReadLine().ToUpper() != "Y")
+    {
+        Console.WriteLine("取消立直。");
+        return;
+    }
 
-            // 4. 檢查是否真的聽牌
-            if (!IsTenpai())
-            {
-                Console.WriteLine("\n=== 假立直被抓到了！===");
-                Console.WriteLine("未聽牌，判定為假立直！");
-                Console.WriteLine("請仔細審視手牌，進行罰符4000點！");
-                DeductPoints(4000);
-                Console.WriteLine($"當前點數：{playerPoints}");
-                Console.WriteLine("按任意鍵繼續...");
-                Console.ReadKey();
-                return;
-            }
+    // 4. 檢查是否真的聽牌
+    if (!IsTenpai())
+    {
+        Console.WriteLine("\n=== 假立直被抓到了！===");
+        Console.WriteLine("未聽牌，判定為假立直！");
+        Console.WriteLine("請仔細審視手牌，進行罰符4000點！");
+        DeductPoints(4000);
+        Console.WriteLine($"當前點數：{playerPoints}");
+        Console.WriteLine("按任意鍵繼續...");
+        Console.ReadKey();
+        return;
+    }
 
-            // 5. 執行立直
-            playerPoints -= 1000; // 立直棒
-            richiCount++;
-            isRichi = true;
-            // 修改這裡：只有在第一巡且沒有任何棄牌時才能兩立直
-            isDoubleRiichi = isFirstRound && discardedTiles.Count == 0;
+    // 5. 執行立直
+    playerPoints -= 1000; // 立直棒
+    richiCount++;
+    isRichi = true;
+    // 修改這裡：只有在第一巡且沒有任何棄牌時才能兩立直
+    isDoubleRiichi = isFirstRound && discardedTiles.Count == 0;
 
-            // 6. 顯示結果
-            if (isDoubleRiichi)
-                Console.WriteLine("兩立直成功！");
-            else
-                Console.WriteLine("立直成功！");
-            Console.WriteLine($"當前點數：{playerPoints}");
-            Console.WriteLine("按任意鍵繼續...");
-            Console.ReadKey();
-        }
+    // 6. 顯示結果
+    if (isDoubleRiichi)
+        Console.WriteLine("兩立直成功！");
+    else
+        Console.WriteLine("立直成功！");
+    Console.WriteLine($"當前點數：{playerPoints}");
+    Console.WriteLine("按任意鍵繼續...");
+    Console.ReadKey();
+}
         private void DeductPoints(int points)
         {
             playerPoints -= points;
@@ -277,33 +277,33 @@ namespace MahjongGame
 
 
 
-        private bool CheckLevelComplete(int han, int fu)
-        {
-            // 如果是役滿，直接通關
-            if (han >= 13 || yakumanYakuList.Any())
-            {
-                return true;
-            }
+private bool CheckLevelComplete(int han, int fu)
+{
+    // 如果是役滿，直接通關
+    if (han >= 13 || yakumanYakuList.Any())
+    {
+        return true;
+    }
 
-            // 一般和牌的通關條件判斷
-            switch (level)
-            {
-                case 1: // 三番30符起
-                    return han >= 3 && fu >= 30;
-                case 2: // 滿貫（4番40符起）
-                    return (han >= 4 && fu >= 40) || (han >= 5);
-                case 3: // 跳滿（六番起）
-                    return han >= 6;
-                case 4: // 倍滿（八番起）
-                    return han >= 8;
-                case 5: // 三倍滿（十一番起）
-                    return han >= 11;
-                case 6: // 役滿（十三番起）
-                    return han >= 13;
-                default:
-                    return false;
-            }
-        }
+    // 一般和牌的通關條件判斷
+    switch (level)
+    {
+        case 1: // 三番30符起
+            return han >= 3 && fu >= 30;
+        case 2: // 滿貫（4番40符起）
+            return (han >= 4 && fu >= 40) || (han >= 5);
+        case 3: // 跳滿（六番起）
+            return han >= 6;
+        case 4: // 倍滿（八番起）
+            return han >= 8;
+        case 5: // 三倍滿（十一番起）
+            return han >= 11;
+        case 6: // 役滿（十三番起）
+            return han >= 13;
+        default:
+            return false;
+    }
+}
 
 
         private void CompleteHand()
@@ -367,9 +367,17 @@ namespace MahjongGame
                 {
                     Console.WriteLine(yakuName);
                 }
+                 // 如果是立直，顯示裏寶牌
+        if (isRichi || isDoubleRiichi)
+        {
+            Console.WriteLine("\n=== 裏寶牌指示牌 ===");
+            var visibleUraDora = uraDoraIndicators.Take(doraIndicators.Count).ToList();
+            Console.WriteLine(string.Join(", ", visibleUraDora));
+            Console.WriteLine("==================");
+        }
 
-                Console.WriteLine($"\n獲得 {basePoints}點");
-            }
+        Console.WriteLine($"\n獲得 {basePoints}點");
+    }
             else
             {
                 // 一般和牌的情況
@@ -379,6 +387,14 @@ namespace MahjongGame
                     Console.WriteLine($"{yaku.name} {yaku.value}番");
                 }
 
+        // 如果是立直，顯示裏寶牌
+        if (isRichi || isDoubleRiichi)
+        {
+            Console.WriteLine("\n=== 裏寶牌指示牌 ===");
+            var visibleUraDora = uraDoraIndicators.Take(doraIndicators.Count).ToList();
+            Console.WriteLine(string.Join(", ", visibleUraDora));
+            Console.WriteLine("==================");
+        }
                 Console.Write("\n總計 ");
                 string rankName = GetHandRank(yakuList.Sum(y => y.value), CalculateFu());
                 if (!string.IsNullOrEmpty(rankName))
@@ -501,47 +517,47 @@ namespace MahjongGame
                 }
             }
         }
-        private void ResetDoraIndicators()
-        {
-            Console.WriteLine($"Debug: 重置前的寶牌 = {string.Join(", ", doraIndicators)}");
+       private void ResetDoraIndicators()
+{
+    Console.WriteLine($"Debug: 重置前的寶牌 = {string.Join(", ", doraIndicators)}");
 
-            // 保存當前寶牌的副本
-            var currentDoras = new List<string>(doraIndicators);
-            var currentUraDoras = new List<string>(uraDoraIndicators);
+    // 保存當前寶牌的副本
+    var currentDoras = new List<string>(doraIndicators);
+    var currentUraDoras = new List<string>(uraDoraIndicators);
 
-            // 打亂當前明寶的順序
-            Random rnd = new Random();
-            int n = currentDoras.Count;
-            while (n > 1)
-            {
-                n--;
-                int k = rnd.Next(n + 1);
-                string temp = currentDoras[k];
-                currentDoras[k] = currentDoras[n];
-                currentDoras[n] = temp;
-            }
+    // 打亂當前明寶的順序
+    Random rnd = new Random();
+    int n = currentDoras.Count;
+    while (n > 1)
+    {
+        n--;
+        int k = rnd.Next(n + 1);
+        string temp = currentDoras[k];
+        currentDoras[k] = currentDoras[n];
+        currentDoras[n] = temp;
+    }
 
-            // 打亂當前裏寶的順序
-            n = currentUraDoras.Count;
-            while (n > 1)
-            {
-                n--;
-                int k = rnd.Next(n + 1);
-                string temp = currentUraDoras[k];
-                currentUraDoras[k] = currentUraDoras[n];
-                currentUraDoras[n] = temp;
-            }
+    // 打亂當前裏寶的順序
+    n = currentUraDoras.Count;
+    while (n > 1)
+    {
+        n--;
+        int k = rnd.Next(n + 1);
+        string temp = currentUraDoras[k];
+        currentUraDoras[k] = currentUraDoras[n];
+        currentUraDoras[n] = temp;
+    }
 
-            // 清空並重新設置寶牌
-            doraIndicators.Clear();
-            uraDoraIndicators.Clear();
+    // 清空並重新設置寶牌
+    doraIndicators.Clear();
+    uraDoraIndicators.Clear();
 
-            // 設置重新排序後的寶牌
-            doraIndicators.AddRange(currentDoras);
-            uraDoraIndicators.AddRange(currentUraDoras);
+    // 設置重新排序後的寶牌
+    doraIndicators.AddRange(currentDoras);
+    uraDoraIndicators.AddRange(currentUraDoras);
 
-            Console.WriteLine($"Debug: 重置後的寶牌 = {string.Join(", ", doraIndicators)}");
-        }
+    Console.WriteLine($"Debug: 重置後的寶牌 = {string.Join(", ", doraIndicators)}");
+}
         private string GetHandRank(int han, int fu)
         {
             if (han >= 13) return "累積役滿";
@@ -637,15 +653,15 @@ namespace MahjongGame
 
             // 一般役種
             // 一飜
-            // 一飜
-            if (isDoubleRiichi)  // 先判斷是否為雙立直
-            {
-                yakuList.Add(("兩立直", 2));
-            }
-            else if (isRichi)    // 如果不是雙立直，才判斷一般立直
-            {
-                yakuList.Add(("立直", 1));
-            }
+    // 一飜
+    if (isDoubleRiichi)  // 先判斷是否為雙立直
+    {
+        yakuList.Add(("兩立直", 2));
+    }
+    else if (isRichi)    // 如果不是雙立直，才判斷一般立直
+    {
+        yakuList.Add(("立直", 1));
+    }
             if (IsPinfu()) yakuList.Add(("平和", 1));
             if (IsTanyao()) yakuList.Add(("斷么九", 1));
             if (IsIipeikou()) yakuList.Add(("一盃口", 1));
