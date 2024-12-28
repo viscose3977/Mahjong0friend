@@ -373,23 +373,23 @@ namespace MahjongGame
             // 清空手牌和其他牌組
             playerHand.Clear();
             discardedTiles.Clear();
-            doraIndicators.Clear();
-            uraDoraIndicators.Clear();
             kangTiles.Clear();
             winningRecord.Clear();
 
             // 重新發牌
             DealInitialHand();
-            GenerateDoraIndicators();
+
+            // 使用現有的重置寶牌函式
+            ResetDoraIndicators();
 
             // 重置遊戲狀態
             isRichi = false;
+            isDoubleRiichi = false;
             hasWon = false;
             kangCount = 0;
             isFirstRound = true;
             levelCompleted = false;
         }
-
         // 新增初始化新關卡的方法
         private void InitializeNewLevel()
         {

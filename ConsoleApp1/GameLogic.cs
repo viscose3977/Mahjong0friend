@@ -120,7 +120,7 @@ namespace MahjongGame
                 return;
             }
 
-            if (isRichi)
+            if (isRichi || isDoubleRiichi)
             {
                 Console.WriteLine("已經立直！");
                 Console.WriteLine("按任意鍵繼續...");
@@ -162,7 +162,8 @@ namespace MahjongGame
             playerPoints -= 1000; // 立直棒
             richiCount++;
             isRichi = true;
-            isDoubleRiichi = isFirstRound; // 如果是第一巡，則為兩立直
+            // 修改這裡：只有在第一巡且沒有任何棄牌時才能兩立直
+            isDoubleRiichi = isFirstRound && discardedTiles.Count == 0;
 
             // 6. 顯示結果
             if (isDoubleRiichi)
@@ -278,19 +279,26 @@ namespace MahjongGame
 
         private bool CheckLevelComplete(int han, int fu)
         {
+            // 如果是役滿，直接通關
+            if (han >= 13 || yakumanYakuList.Any())
+            {
+                return true;
+            }
+
+            // 一般和牌的通關條件判斷
             switch (level)
             {
-                case 1: // 第一關：至少三飜
-                    return han >= 3;
-                case 2: // 第二關：滿貫
-                    return han >= 5;
-                case 3: // 第三關：跳滿
+                case 1: // 三番30符起
+                    return han >= 3 && fu >= 30;
+                case 2: // 滿貫（4番40符起）
+                    return (han >= 4 && fu >= 40) || (han >= 5);
+                case 3: // 跳滿（六番起）
                     return han >= 6;
-                case 4: // 第四關：倍滿
+                case 4: // 倍滿（八番起）
                     return han >= 8;
-                case 5: // 第五關：三倍滿
+                case 5: // 三倍滿（十一番起）
                     return han >= 11;
-                case 6: // 第六關：役滿
+                case 6: // 役滿（十三番起）
                     return han >= 13;
                 default:
                     return false;
@@ -501,44 +509,36 @@ namespace MahjongGame
             var currentDoras = new List<string>(doraIndicators);
             var currentUraDoras = new List<string>(uraDoraIndicators);
 
-            // 合併所有當前寶牌
-            var allCurrentDoras = new List<string>();
-            allCurrentDoras.AddRange(currentDoras);  // 已開的明寶
-            allCurrentDoras.AddRange(currentUraDoras);  // 已開的裏寶
-
-            // 添加未開的寶牌
-            for (int i = allCurrentDoras.Count; i < 10; i++)
-            {
-                allCurrentDoras.Add(initialDoraIndicators[i]);
-            }
-
-            // 打亂順序
+            // 打亂當前明寶的順序
             Random rnd = new Random();
-            int n = allCurrentDoras.Count;
+            int n = currentDoras.Count;
             while (n > 1)
             {
                 n--;
                 int k = rnd.Next(n + 1);
-                string temp = allCurrentDoras[k];
-                allCurrentDoras[k] = allCurrentDoras[n];
-                allCurrentDoras[n] = temp;
+                string temp = currentDoras[k];
+                currentDoras[k] = currentDoras[n];
+                currentDoras[n] = temp;
+            }
+
+            // 打亂當前裏寶的順序
+            n = currentUraDoras.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = rnd.Next(n + 1);
+                string temp = currentUraDoras[k];
+                currentUraDoras[k] = currentUraDoras[n];
+                currentUraDoras[n] = temp;
             }
 
             // 清空並重新設置寶牌
             doraIndicators.Clear();
             uraDoraIndicators.Clear();
 
-            // 添加相同數量的明寶
-            for (int i = 0; i < currentDoras.Count; i++)
-            {
-                doraIndicators.Add(allCurrentDoras[i]);
-            }
-
-            // 添加相同數量的裏寶
-            for (int i = 0; i < currentUraDoras.Count; i++)
-            {
-                uraDoraIndicators.Add(allCurrentDoras[i + 5]);
-            }
+            // 設置重新排序後的寶牌
+            doraIndicators.AddRange(currentDoras);
+            uraDoraIndicators.AddRange(currentUraDoras);
 
             Console.WriteLine($"Debug: 重置後的寶牌 = {string.Join(", ", doraIndicators)}");
         }
@@ -637,13 +637,20 @@ namespace MahjongGame
 
             // 一般役種
             // 一飜
-            if (isRichi) yakuList.Add(("立直", 1));
+            // 一飜
+            if (isDoubleRiichi)  // 先判斷是否為雙立直
+            {
+                yakuList.Add(("兩立直", 2));
+            }
+            else if (isRichi)    // 如果不是雙立直，才判斷一般立直
+            {
+                yakuList.Add(("立直", 1));
+            }
             if (IsPinfu()) yakuList.Add(("平和", 1));
             if (IsTanyao()) yakuList.Add(("斷么九", 1));
             if (IsIipeikou()) yakuList.Add(("一盃口", 1));
 
             // 二飜
-            if (isDoubleRiichi) yakuList.Add(("兩立直", 2));
             //缺三色同順
             if (IsIttsu()) yakuList.Add(("一氣通貫", 2));
             if (IsChanta()) yakuList.Add(("混全帶么九", 2));

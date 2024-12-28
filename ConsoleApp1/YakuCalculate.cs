@@ -49,15 +49,15 @@ namespace MahjongGame
                     else
                     {
                         Console.WriteLine($"打{discardTile}聽{string.Join("、", waitingTiles)}");
-            }
-        
-            // 如果是進張狀態，不返回和牌的結果
-            return true;
                     }
-                }
 
-                return false;
+                    // 如果是進張狀態，不返回和牌的結果
+                    return true;
+                }
             }
+
+            return false;
+        }
 
         // 獲取可能的待牌
         private List<string> GetPossibleWaitingTiles(List<string> hand)
