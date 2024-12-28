@@ -46,6 +46,8 @@ namespace MahjongGame
                 // 測試用，不用時註解掉
                 playerHand = new List<string> { "一餅", "一餅", "二餅", "二餅", "三餅", "三餅", "四餅", "五餅", "七餅", "七餅", "一索", "二索", "三索", "九餅" };
                 SortHand();
+                //playerHand = new List<string> { "一餅", "一餅", "一餅", "一餅", "二餅", "三餅", "四餅", "五餅", "六餅", "七餅", "一索", "二索", "三索", "九餅" };
+                //SortHand();
 
                 //playerHand = new List<string> { "東", "東", "東", "南", "南", "南", "西", "西", "西", "北", "北", "北", "中", "中" };
                 //SortHand();
