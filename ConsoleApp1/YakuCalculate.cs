@@ -155,8 +155,8 @@ namespace MahjongGame
             try
             {
                 // 加入除錯輸出
-                Console.WriteLine($"Debug: isRichi = {isRichi}");
-                Console.WriteLine($"Debug: playerHand = {string.Join(", ", playerHand)}");
+                //Console.WriteLine($"Debug: isRichi = {isRichi}");
+                //Console.WriteLine($"Debug: playerHand = {string.Join(", ", playerHand)}");
                 int han = 0;
 
                 // 一飜
@@ -271,7 +271,7 @@ namespace MahjongGame
         private int CalculateDoraCount()
         {
             // 加入除錯輸出
-            Console.WriteLine($"Debug: doraIndicators = {string.Join(", ", doraIndicators)}");
+            //Console.WriteLine($"Debug: doraIndicators = {string.Join(", ", doraIndicators)}");
 
             int count = 0;
             foreach (var indicator in doraIndicators.Take(kangCount + 1))
@@ -287,7 +287,7 @@ namespace MahjongGame
         private int CalculateUraDoraCount()
         {
             // 加入除錯輸出
-            Console.WriteLine($"Debug: uraDoraIndicators = {string.Join(", ", uraDoraIndicators)}");
+            //Console.WriteLine($"Debug: uraDoraIndicators = {string.Join(", ", uraDoraIndicators)}");
 
             int count = 0;
             foreach (var indicator in uraDoraIndicators.Take(kangCount + 1))
@@ -303,6 +303,10 @@ namespace MahjongGame
         {
             try
             {
+                if (indicator.StartsWith("赤"))
+                {
+                    indicator = indicator.Replace("赤", ""); // 移除"赤"字
+                }
                 // 處理數牌
                 if (indicator.EndsWith("萬") || indicator.EndsWith("餅") || indicator.EndsWith("索"))
                 {
@@ -335,7 +339,7 @@ namespace MahjongGame
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"GetDoraFromIndicator 發生錯誤：{ex.Message}");
+                Console.WriteLine($"debug:GetDoraFromIndicator 發生錯誤：{ex.Message}");
                 return "";
             }
         }

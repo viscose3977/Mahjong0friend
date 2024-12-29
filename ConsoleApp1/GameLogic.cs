@@ -525,8 +525,8 @@ namespace MahjongGame
         }
         private void ResetDoraIndicators()
         {
-            Console.WriteLine($"Debug: 重置前的明寶牌 = {string.Join(", ", doraIndicators)}");
-            Console.WriteLine($"Debug: 重置前的裏寶牌 = {string.Join(", ", uraDoraIndicators)}");
+            //Console.WriteLine($"Debug: 重置前的明寶牌 = {string.Join(", ", doraIndicators)}");
+            //Console.WriteLine($"Debug: 重置前的裏寶牌 = {string.Join(", ", uraDoraIndicators)}");
 
             // 保存當前寶牌的副本
             var currentDoras = new List<string>(doraIndicators);
@@ -561,8 +561,8 @@ namespace MahjongGame
             doraIndicators.AddRange(currentDoras);
             uraDoraIndicators.AddRange(currentUraDoras);
 
-            Console.WriteLine($"Debug: 重置後的明寶牌 = {string.Join(", ", doraIndicators)}");
-            Console.WriteLine($"Debug: 重置後的裏寶牌 = {string.Join(", ", uraDoraIndicators)}");
+            //Console.WriteLine($"Debug: 重置後的明寶牌 = {string.Join(", ", doraIndicators)}");
+            //Console.WriteLine($"Debug: 重置後的裏寶牌 = {string.Join(", ", uraDoraIndicators)}");
         }
         private string GetHandRank(int han, int fu)
         {

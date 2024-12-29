@@ -136,14 +136,6 @@ namespace MahjongGame
             return false;
         }
 
-
-        private static bool IsHonor(string type)
-        {
-            return type == "東" || type == "南" || type == "西" || type == "北" ||
-                   type == "白" || type == "發" || type == "中";
-        }
-
-
         // 判斷是否為數牌
         private static bool IsNumberTile(string tile)
         {
@@ -166,7 +158,6 @@ namespace MahjongGame
 
             return (0, tile);
         }
-
 
         private bool IsPinfu()//平和
         {
