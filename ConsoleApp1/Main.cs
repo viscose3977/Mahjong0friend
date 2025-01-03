@@ -1,7 +1,7 @@
 ﻿// Main.cs
 using System;
 
-public class Program  // 將 Program 放在全局命名空間
+public class Program  
 {
     public static void Main(string[] args)
     {

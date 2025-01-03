@@ -133,8 +133,8 @@ namespace MahjongGame
             // 暫時替換手牌進行檢查
             playerHand = new List<string>(hand);
 
-            // 獲取役種列表（不含寶牌）
-            var yakuList = GetYakuListWithoutDora();
+            // 獲取役種列表
+            var yakuList = GetYakuList();
 
             // 恢復原始手牌
             playerHand = originalHand;
@@ -159,11 +159,34 @@ namespace MahjongGame
                 //Console.WriteLine($"Debug: playerHand = {string.Join(", ", playerHand)}");
                 int han = 0;
 
+                // 計算寶牌
+                han += playerHand.Count(t => t.Contains("赤"));  // 赤寶牌
+                han += CalculateDoraCount();  // 一般寶牌
+                if (isRichi)
+                {
+                    han += CalculateUraDoraCount();  // 裏寶牌（立直時才計算）
+                }
+
                 // 一飜
                 if (isRichi) han += 1; // 立直
                 if (IsPinfu()) han += 1; // 平和
                 if (IsTanyao()) han += 1; // 斷么九
                 if (IsIipeikou()) han += 1; // 一盃口
+                // 自風判斷（永遠是東）
+                if (IsWindTriplet("東", "東"))
+                {
+                    han += 1;  // 自風東
+                }
+
+                // 場風判斷
+                if (roundWind == "東" && IsWindTriplet("東", "東"))
+                {
+                    han += 1;  // 場風東
+                }
+                else if (roundWind == "南" && IsWindTriplet("南", "南"))
+                {
+                    han += 1;  // 場風南
+                }
 
                 // 二飜
                 if (isDoubleRiichi) han += 2; // 兩立直
@@ -348,6 +371,7 @@ namespace MahjongGame
             var firstTile = tiles[0].Replace("赤", "");
             return tiles.All(t => t.Replace("赤", "") == firstTile);
         }
+
         private int CalculateDoraCount()
         {
             // 加入除錯輸出
@@ -506,7 +530,6 @@ namespace MahjongGame
             Console.WriteLine($"警告：無法找到 {han}番{fu}符 的對應點數");
             return 0;
         }
-
         private int CalculateYakumanMultiplier()
         {
             int multiplier = 0;
@@ -515,44 +538,23 @@ namespace MahjongGame
             // 檢查役滿役種並記錄
             if (IsKokushi())
             {
-                if (IsKokushimusouJuusanmenmachi())
-                {
-                    multiplier += 2;
-                    yakumanList.Add("國士無雙十三面");
-                }
-                else
-                {
                     multiplier += 1;
                     yakumanList.Add("國士無雙");
-                }
             }
 
             if (IsSuuankou())
             {
-                if (IsSuankoTanki())
-                {
-                    multiplier += 2;
-                    yakumanList.Add("四暗刻單騎");
-                }
-                else
-                {
+               
                     multiplier += 1;
                     yakumanList.Add("四暗刻");
-                }
+
             }
 
             if (IsChuurenpoutou())
             {
-                if (IsJunseiChuurenpoutou())
-                {
-                    multiplier += 2;
-                    yakumanList.Add("純正九蓮寶燈");
-                }
-                else
-                {
+             
                     multiplier += 1;
                     yakumanList.Add("九蓮寶燈");
-                }
             }
 
             // 檢查其他役滿

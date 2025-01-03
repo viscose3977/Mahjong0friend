@@ -431,13 +431,18 @@ namespace MahjongGame
                 }
                 else
                 {
-                    string rankName = GetHandRank(yakuList.Sum(y => y.value), CalculateFu());
-                    if (!string.IsNullOrEmpty(rankName))
-                    {
-                        record += $"{rankName} ";
-                    }
-                    record += $"{yakuList.Sum(y => y.value)}番{CalculateFu()}符";
+                    // 重新取得完整的役種列表
+                    var fullYakuList = GetYakuList();  
+                    int totalHan = fullYakuList.Sum(y => y.value);
+
+                    // 計算符數
+                    int totalFu = CalculateFu();
+
+                    // 只顯示番數和符數
+                    record += $"{totalHan}番{totalFu}符";
                 }
+
+                // 加入獲得點數
                 record += $", 獲得：{points}點";
                 winningRecord.Add(record);
 
@@ -592,24 +597,9 @@ namespace MahjongGame
                 yakuList.Add(("大四喜", 26));
                 hasYakuman = true;
             }
-            if (IsKokushimusouJuusanmenmachi())
-            {
-                yakuList.Add(("國士無雙十三面聽", 26));
-                hasYakuman = true;
-            }
-            if (IsJunseiChuurenpoutou())
-            {
-                yakuList.Add(("純正九蓮寶燈", 26));
-                hasYakuman = true;
-            }
-            if (IsSuankoTanki())
-            {
-                yakuList.Add(("四暗刻單騎", 26));
-                hasYakuman = true;
-            }
-
+         
             // 一倍役滿
-            if (IsSuuankou() && !IsSuankoTanki())
+            if (IsSuuankou())
             {
                 yakuList.Add(("四暗刻", 13));
                 hasYakuman = true;
@@ -639,17 +629,12 @@ namespace MahjongGame
                 yakuList.Add(("四槓子", 13));
                 hasYakuman = true;
             }
-            if (IsChuurenpoutou() && !IsJunseiChuurenpoutou())
-            {
-                yakuList.Add(("九蓮寶燈", 13));
-                hasYakuman = true;
-            }
             if (IsRyuuiisou())
             {
                 yakuList.Add(("綠一色", 13));
                 hasYakuman = true;
             }
-            if (IsKokushi() && !IsKokushimusouJuusanmenmachi())
+            if (IsKokushi())
             {
                 yakuList.Add(("國士無雙", 13));
                 hasYakuman = true;
@@ -676,6 +661,21 @@ namespace MahjongGame
             if (IsPinfu()) yakuList.Add(("平和", 1));
             if (IsTanyao()) yakuList.Add(("斷么九", 1));
             if (IsIipeikou()) yakuList.Add(("一盃口", 1));
+            // 自風判斷（永遠是東）
+            if (IsWindTriplet("東", "東"))
+            {
+                yakuList.Add(("自風 東", 1));
+            }
+
+            // 場風判斷
+            if (roundWind == "東" && IsWindTriplet("東", "東"))
+            {
+                yakuList.Add(("場風 東", 1));
+            }
+            else if (roundWind == "南" && IsWindTriplet("南", "南"))
+            {
+                yakuList.Add(("場風 南", 1));
+            }
 
             // 二飜
             //缺三色同順
@@ -718,61 +718,7 @@ namespace MahjongGame
             return yakuList;
         }
 
-        private List<(string name, int value)> GetYakuListWithoutDora()
-        {
-            List<(string name, int value)> yakuList = new List<(string name, int value)>();
-            bool hasYakuman = false;
-
-            // 檢查所有役滿
-            // 兩倍役滿
-            if (IsDaisuushi())
-            {
-                yakuList.Add(("大四喜", 26));
-                hasYakuman = true;
-            }
-            if (IsKokushimusouJuusanmenmachi())
-            {
-                yakuList.Add(("國士無雙十三面聽", 26));
-                hasYakuman = true;
-            }
-            // ... 其他役滿檢查 ...
-
-            // 如果有役滿，直接返回
-            if (hasYakuman) return yakuList;
-
-            // 一般役種
-            // 一飜
-            if (isDoubleRiichi)
-            {
-                yakuList.Add(("兩立直", 2));
-            }
-            else if (isRichi)
-            {
-                yakuList.Add(("立直", 1));
-            }
-            if (IsPinfu()) yakuList.Add(("平和", 1));
-            if (IsTanyao()) yakuList.Add(("斷么九", 1));
-            if (IsIipeikou()) yakuList.Add(("一盃口", 1));
-
-            // 二飜
-            if (IsIttsu()) yakuList.Add(("一氣通貫", 2));
-            if (IsChanta()) yakuList.Add(("混全帶么九", 2));
-            if (IsChitoitsu()) yakuList.Add(("七對子", 2));
-            if (IsSanankou()) yakuList.Add(("三暗刻", 2));
-            if (IsSanshokuDoukou()) yakuList.Add(("三色同刻", 2));
-            if (IsHonroutou()) yakuList.Add(("混老頭", 2));
-            if (IsShouSangen()) yakuList.Add(("小三元", 2));
-
-            // 三飜
-            if (IsHonitsu()) yakuList.Add(("混一色", 3));
-            if (IsJunchan()) yakuList.Add(("純全帶么九", 3));
-            if (IsRyanpeikou()) yakuList.Add(("二盃口", 3));
-
-            // 六飜
-            if (IsChinitsu()) yakuList.Add(("清一色", 6));
-
-            return yakuList;
-        }
+  
 
         private void ShowGameClearScreen()
         {
