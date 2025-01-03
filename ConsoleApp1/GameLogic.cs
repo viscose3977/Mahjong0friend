@@ -576,7 +576,7 @@ namespace MahjongGame
             if (han >= 11) return "三倍滿";
             if (han >= 8) return "倍滿";
             if (han >= 6) return "跳滿";
-            if (han >= 4 || (han == 3 && fu >= 70) || (han == 4 && fu >= 40)) return "滿貫";
+            if (han >= 5 || (han == 3 && fu >= 70) || (han == 4 && fu >= 40)) return "滿貫";
             return "";
         }
 
