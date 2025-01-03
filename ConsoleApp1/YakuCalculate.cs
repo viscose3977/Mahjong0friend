@@ -133,8 +133,8 @@ namespace MahjongGame
             // 暫時替換手牌進行檢查
             playerHand = new List<string>(hand);
 
-            // 獲取役種列表
-            var yakuList = GetYakuList();
+            // 獲取役種列表（不含寶牌）
+            var yakuList = GetYakuListWithoutDora();
 
             // 恢復原始手牌
             playerHand = originalHand;
@@ -171,7 +171,7 @@ namespace MahjongGame
                 if (IsIttsu()) han += 2; // 一氣通貫
                 if (IsChanta()) han += 2; // 混全帶么九
                 if (IsChitoitsu()) han += 2; // 七對子
-                if (IsToitoi()) han += 2; // 對對和
+                //if (IsToitoi()) han += 2; // 對對和
                 if (IsSanankou()) han += 2; // 三暗刻
                 if (IsSanshokuDoukou()) han += 2; // 三色同刻
                 if (IsHonroutou()) han += 2; // 混老頭
@@ -260,13 +260,11 @@ namespace MahjongGame
         private int CalculateFu()
         {
             // 特殊情況
-            if (IsChitoitsu()) return 25; // 七對子固定25符
-            if (IsPinfu()) return 30;     // 平和榮和30符
+            if (IsChitoitsu()) return 25;  // 七對子固定25符
+            if (IsPinfu()) return 30;      // 平和榮和30符
 
-            int fu = 20; // 基本符數
-
-            // 門清加符（榮和時）
-            if (!discardedTiles.Any()) fu += 10;
+            int fu = 20;  // 基本符數
+            fu += 10;     // 門清榮和必定加10符
 
             // 計算面子和雀頭的符數
             var tiles = new List<string>(playerHand);
@@ -280,44 +278,29 @@ namespace MahjongGame
             if (pairs.Any())
             {
                 var pairTile = pairs.First().Key;
-                if (IsValueTile(pairTile)) // 自風、場風、三元牌
+                if (IsValueTile(pairTile))  // 自風、場風、三元牌
                 {
                     fu += 2;
                 }
-                // 中張牌、么九牌、客風牌不加符
             }
-
 
             // 計算面子符數
             var mentsuList = GetMentsuList();
             foreach (var mentsu in mentsuList)
             {
-                if (IsKotsu(mentsu)) // 刻子
+                if (IsKotsu(mentsu))  // 刻子
                 {
-                    bool isConcealed = !discardedTiles.Contains(mentsu[0]);
                     bool isYaochu = IsYaochuOrHonor(mentsu[0]);
 
-                    if (mentsu.Count == 4) // 槓子
+                    if (mentsu.Count == 4)  // 槓子
                     {
-                        if (isConcealed) // 暗槓
-                        {
-                            fu += isYaochu ? 32 : 16;
-                        }
-                        else // 明槓
-                        {
-                            fu += isYaochu ? 16 : 8;
-                        }
+                        // 單人麻將全算暗槓
+                        fu += isYaochu ? 32 : 16;
                     }
-                    else // 刻子
+                    else  // 刻子
                     {
-                        if (isConcealed) // 暗刻
-                        {
-                            fu += isYaochu ? 8 : 4;
-                        }
-                        else // 明刻
-                        {
-                            fu += isYaochu ? 4 : 2;
-                        }
+                        // 單人麻將全算暗刻
+                        fu += isYaochu ? 8 : 4;
                     }
                 }
                 // 順子不加符

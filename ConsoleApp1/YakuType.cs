@@ -191,7 +191,6 @@ namespace MahjongGame
 
         private bool IsPinfu()//平和
         {
-            if (discardedTiles.Any()) return false; // 必須門清
 
             var groups = playerHand.GroupBy(x => x.Replace("赤", ""));
             int shuntsuCount = 0;
@@ -341,11 +340,12 @@ namespace MahjongGame
             return IsChitoitsuHandler(playerHand);
         }
 
-        private bool IsToitoi()//對對和
-        {
-            var groups = playerHand.GroupBy(x => x.Replace("赤", ""));
-            return groups.All(g => g.Count() >= 3 || g.Count() == 2);
-        }
+        //這遊戲沒對對
+        //private bool IsToitoi()//對對和
+        //{
+        //    var groups = playerHand.GroupBy(x => x.Replace("赤", ""));
+        //    return groups.All(g => g.Count() >= 3 || g.Count() == 2);
+        //}
 
         private bool IsSanankou()//三暗刻
         {
@@ -417,7 +417,6 @@ namespace MahjongGame
 
         private bool IsRyanpeikou()//二盃口
         {
-            if (discardedTiles.Any()) return false; // 必須門清
             var shuntsuList = GetShuntsuList();
             var groups = shuntsuList.GroupBy(x => x);
             return groups.Count(g => g.Count() >= 2) >= 2;
@@ -443,27 +442,7 @@ namespace MahjongGame
             });
         }
 
-        private static bool IsKokushiHandler(List<string> hand)//國士無雙
-        {
-            var yaochus = new HashSet<string>
-            {
-                "一萬", "九萬", "一餅", "九餅", "一索", "九索",
-                "東", "南", "西", "北", "白", "發", "中"
-            };
-            var handTiles = new HashSet<string>(
-                hand.Select(x => x.Replace("赤", "")));
-            return handTiles.SetEquals(yaochus);
-        }
-        private bool IsKokushi()//國士無雙
-        {
-            return IsKokushiHandler(playerHand);
-        }
 
-        private bool IsSuuankou()//四暗刻
-        {
-            if (discardedTiles.Any()) return false;
-            return GetKotsuList().Count == 4;
-        }
 
         private bool IsDaisangen()//大三元
         {
@@ -569,60 +548,127 @@ namespace MahjongGame
             return kangGroups >= 4;
         }
 
-        private static bool IsChuurenpoutouHandler(List<string> hand)//九蓮寶燈
+        private static bool IsChuurenpoutouHandler(List<string> hand)  // 九蓮寶燈基本判斷
         {
             var normalizedHand = hand.Select(x => x.Replace("赤", "")).ToList();
             string suit = GetSuit(normalizedHand[0]);
             if (string.IsNullOrEmpty(suit)) return false;
 
-            int[] requiredCounts = { 3, 1, 1, 1, 1, 1, 1, 1, 3 };
+            // 檢查是否都是同一種花色
+            if (!normalizedHand.All(t => GetSuit(t) == suit)) return false;
+
+            // 檢查基本要求：1和9至少3張，2-8至少1張
+            int[] minCounts = { 3, 1, 1, 1, 1, 1, 1, 1, 3 };
             string[] numbers = { "一", "二", "三", "四", "五", "六", "七", "八", "九" };
 
             for (int i = 0; i < 9; i++)
             {
                 string tile = $"{numbers[i]}{suit}";
-                if (normalizedHand.Count(x => x == tile) < requiredCounts[i])
+                if (normalizedHand.Count(x => x == tile) < minCounts[i])
                     return false;
             }
 
             return true;
         }
 
-        private bool IsChuurenpoutou()//九蓮寶燈
+        private bool IsChuurenpoutou()  // 九蓮寶燈
         {
-            return IsChuurenpoutouHandler(playerHand);
+            if (!IsChuurenpoutouHandler(playerHand)) return false;
+
+            // 計算聽牌數量
+            var waitingTiles = GetPossibleWaitingTiles(playerHand);
+
+            // 如果聽1張牌，則為一般九蓮寶燈
+            // 如果聽9張牌，則為純正九蓮寶燈，返回false
+            return waitingTiles.Count == 1;
         }
 
-        private bool IsJunseiChuurenpoutou()//純正九蓮寶燈
+        private bool IsJunseiChuurenpoutou()  // 純正九蓮寶燈
         {
-            if (!IsChuurenpoutou()) return false;
+            if (!IsChuurenpoutouHandler(playerHand)) return false;
 
+            // 計算聽牌數量
+            var waitingTiles = GetPossibleWaitingTiles(playerHand);
+            if (waitingTiles.Count != 9) return false;  // 必須聽9張牌
+
+
+
+            // 移除赤牌標記並獲取花色
             var normalizedHand = playerHand.Select(x => x.Replace("赤", "")).ToList();
             string suit = GetSuit(normalizedHand[0]);
 
-            int[] exactCounts = { 3, 1, 1, 1, 1, 1, 1, 1, 3 };
+            // 檢查基本型（1112345678999）是否存在
+            int[] baseCounts = { 3, 1, 1, 1, 1, 1, 1, 1, 3 };
             string[] numbers = { "一", "二", "三", "四", "五", "六", "七", "八", "九" };
 
+            // 找出額外的那張牌（第14張）
+            var extraTile = "";
             for (int i = 0; i < 9; i++)
             {
                 string tile = $"{numbers[i]}{suit}";
-                if (normalizedHand.Count(x => x == tile) != exactCounts[i])
+                int count = normalizedHand.Count(x => x == tile);
+
+                if (count > baseCounts[i])
+                {
+                    extraTile = tile;
+                    break;
+                }
+            }
+
+            // 如果沒有找到額外的牌，或者額外的牌不是同花色，返回 false
+            if (string.IsNullOrEmpty(extraTile) || GetSuit(extraTile) != suit)
+                return false;
+
+            // 移除額外的牌後，檢查剩餘牌是否符合基本型
+            normalizedHand.Remove(extraTile);
+            for (int i = 0; i < 9; i++)
+            {
+                string tile = $"{numbers[i]}{suit}";
+                if (normalizedHand.Count(x => x == tile) != baseCounts[i])
                     return false;
             }
 
             return true;
         }
 
-        private bool IsKokushimusouJuusanmenmachi()//國士無雙十三面待ち
+        private static bool IsKokushiHandler(List<string> hand)  // 國士無雙基本判斷
         {
-            if (!IsKokushi()) return false;
+            var yaochus = new HashSet<string>
+    {
+        "一萬", "九萬", "一餅", "九餅", "一索", "九索",
+        "東", "南", "西", "北", "白", "發", "中"
+    };
+            var handTiles = new HashSet<string>(
+                hand.Select(x => x.Replace("赤", "")));
+            return handTiles.SetEquals(yaochus);
+        }
+
+        private bool IsKokushi()  // 國士無雙
+        {
+            if (!IsKokushiHandler(playerHand)) return false;
+
+            // 計算聽牌數量
+            var waitingTiles = GetPossibleWaitingTiles(playerHand);
+
+            // 如果聽1張牌，則為一般國士無雙
+            // 如果聽13張牌，則為國士無雙十三面待ち，返回false
+            return waitingTiles.Count == 1;
+        }
+
+        private bool IsKokushimusouJuusanmenmachi()  // 國士無雙十三面待ち
+        {
+            if (!IsKokushiHandler(playerHand)) return false;
+
+            // 計算聽牌數量
+            var waitingTiles = GetPossibleWaitingTiles(playerHand);
+            if (waitingTiles.Count != 13) return false;  // 必須聽13張牌
 
             // 檢查是否所有么九牌都只有一張
             var yaochus = new HashSet<string>
-        {
-            "一萬", "九萬", "一餅", "九餅", "一索", "九索",
-            "東", "南", "西", "北", "白", "發", "中"
-        };
+    {
+        "一萬", "九萬", "一餅", "九餅", "一索", "九索",
+        "東", "南", "西", "北", "白", "發", "中"
+    };
 
             foreach (var yaochu in yaochus)
             {
@@ -634,14 +680,47 @@ namespace MahjongGame
 
             return true;
         }
+        private bool IsSuuankou()  // 四暗刻
+        {
+            // 取得所有暗刻（包含槓子）
+            var ankoCount = 0;
+            var groups = playerHand.GroupBy(x => x.Replace("赤", ""));
 
-        private bool IsSuankoTanki()//四暗刻單騎
+            foreach (var group in groups)
+            {
+                if (group.Count() >= 3)  // 3張或4張都算暗刻
+                {
+                    ankoCount++;
+                }
+            }
+
+            // 檢查是否有四個暗刻
+            return ankoCount == 4;
+        }
+
+        private bool IsSuankoTanki()  // 四暗刻單騎
         {
             if (!IsSuuankou()) return false;
 
-            // 檢查是否只有一對雀頭
+            // 計算聽牌數量和類型
+            var waitingTiles = GetPossibleWaitingTiles(playerHand);
+
+            // 檢查是否只聽一張牌
+            if (waitingTiles.Count != 1) return false;
+
+            // 檢查是否是單騎聽牌（聽對子）
             var groups = playerHand.GroupBy(x => x.Replace("赤", ""));
-            return groups.Count(g => g.Count() == 2) == 1;
+            foreach (var group in groups)
+            {
+                // 找到單張的牌
+                if (group.Count() == 1)
+                {
+                    // 檢查這張單張是否就是等待的牌
+                    return waitingTiles.Contains(group.Key);
+                }
+            }
+
+            return false;
         }
 
         private bool IsTenhou()//天和
