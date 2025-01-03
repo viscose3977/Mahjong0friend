@@ -79,7 +79,7 @@ namespace MahjongGame
             return false;
         }
 
-
+        
 
         //private static bool CanFormMentsu(List<string> tiles)
         //{
@@ -150,7 +150,7 @@ namespace MahjongGame
             // 1. 嘗試刻子
             for (int i = 0; i < remainingTiles.Count - 2; i++)
             {
-                if (remainingTiles[i] == remainingTiles[i + 1] &&
+                if (remainingTiles[i] == remainingTiles[i + 1] && 
                     remainingTiles[i + 1] == remainingTiles[i + 2])
                 {
                     kotsuCount++;
@@ -164,9 +164,7 @@ namespace MahjongGame
                     if (CanFormMentsu(newTiles, recursionLevel + 1))
                     {
                         return true;
-                    }
-                    else
-                    {
+                    }else {
                         kotsuCount--;
                     }
                 }
@@ -196,9 +194,7 @@ namespace MahjongGame
                 if (CanFormMentsu(newTiles, recursionLevel + 1))
                 {
                     return true;
-                }
-                else
-                {
+                }else{
                     shuntsuCount--;
                 }
             }
