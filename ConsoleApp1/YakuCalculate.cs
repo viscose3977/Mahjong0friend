@@ -206,23 +206,72 @@ namespace MahjongGame
             }
         }
 
+        private List<List<string>> GetMentsuList()
+        {
+            var mentsuList = new List<List<string>>();
+            var tiles = new List<string>(playerHand);
+
+            // 1. 從已槓牌資訊中獲取槓子
+            foreach (var kangTile in kangTiles)
+            {
+                var kang = new List<string> { kangTile, kangTile, kangTile, kangTile };
+                mentsuList.Add(kang);
+            }
+
+            // 2. 找出刻子（手牌中被括號標記的部分）
+            var kotsuGroups = tiles
+                .Where(t => t.StartsWith("("))
+                .GroupBy(t => t.Replace("赤", "").Trim('(', ')'))
+                .Where(g => g.Count() == 3);
+
+            foreach (var group in kotsuGroups)
+            {
+                mentsuList.Add(group.ToList());
+            }
+
+            // 3. 找出順子（剩餘的牌中尋找）
+            var remainingTiles = tiles.Where(t => !t.StartsWith("(")).ToList();
+            while (remainingTiles.Any())
+            {
+                var tile = remainingTiles.First();
+                if (!IsJihai(tile))  // 使用現有的 IsJihai 方法
+                {
+                    var (num, suit) = GetNumberAndType(tile);
+                    if (num <= 7)
+                    {
+                        string tile2 = GetTileString(num + 1, suit);
+                        string tile3 = GetTileString(num + 2, suit);
+                        if (remainingTiles.Contains(tile2) && remainingTiles.Contains(tile3))
+                        {
+                            var shuntsu = new List<string> { tile, tile2, tile3 };
+                            mentsuList.Add(shuntsu);
+                            remainingTiles.Remove(tile);
+                            remainingTiles.Remove(tile2);
+                            remainingTiles.Remove(tile3);
+                            continue;
+                        }
+                    }
+                }
+                remainingTiles.Remove(tile);
+            }
+
+            return mentsuList;
+        }
         private int CalculateFu()
         {
             // 特殊情況
             if (IsChitoitsu()) return 25; // 七對子固定25符
-            if (IsPinfu()) return 30; // 平和榮和30符
+            if (IsPinfu()) return 30;     // 平和榮和30符
 
             int fu = 20; // 基本符數
 
-            // 榮和不加自摸符
-
             // 門清加符（榮和時）
-            if (!discardedTiles.Any()) fu += 10; // 門清
+            if (!discardedTiles.Any()) fu += 10;
 
             // 計算面子和雀頭的符數
             var tiles = new List<string>(playerHand);
 
-            // 找出雀頭（對子）
+            // 計算雀頭符數
             var pairs = tiles
                 .GroupBy(x => x.Replace("赤", ""))
                 .Where(g => g.Count() == 2)
@@ -230,36 +279,48 @@ namespace MahjongGame
 
             if (pairs.Any())
             {
-                var pair = pairs.First();
-                string pairTile = pair.Key;
-
-                // 雀頭加符
-                if (IsYakuhai(pairTile)) fu += 2; // 役牌雀頭
+                var pairTile = pairs.First().Key;
+                if (IsValueTile(pairTile)) // 自風、場風、三元牌
+                {
+                    fu += 2;
+                }
+                // 中張牌、么九牌、客風牌不加符
             }
 
-            // 找出刻子和槓子
-            var kotsuList = GetKotsuList();
-            foreach (var kotsuTile in kotsuList)
+
+            // 計算面子符數
+            var mentsuList = GetMentsuList();
+            foreach (var mentsu in mentsuList)
             {
-                bool isYaochu = ContainsYaochu(kotsuTile);
-                bool isConcealed = !discardedTiles.Contains(kotsuTile);
-                int count = playerHand.Count(t => t.Replace("赤", "") == kotsuTile);
+                if (IsKotsu(mentsu)) // 刻子
+                {
+                    bool isConcealed = !discardedTiles.Contains(mentsu[0]);
+                    bool isYaochu = IsYaochuOrHonor(mentsu[0]);
 
-                if (count == 4) // 槓子
-                {
-                    fu += isConcealed ? 32 : 16; // 暗槓/明槓
+                    if (mentsu.Count == 4) // 槓子
+                    {
+                        if (isConcealed) // 暗槓
+                        {
+                            fu += isYaochu ? 32 : 16;
+                        }
+                        else // 明槓
+                        {
+                            fu += isYaochu ? 16 : 8;
+                        }
+                    }
+                    else // 刻子
+                    {
+                        if (isConcealed) // 暗刻
+                        {
+                            fu += isYaochu ? 8 : 4;
+                        }
+                        else // 明刻
+                        {
+                            fu += isYaochu ? 4 : 2;
+                        }
+                    }
                 }
-                else // 刻子
-                {
-                    fu += isConcealed ? 8 : 2; // 暗刻/明刻（榮和時明刻只有2符）
-                }
-
-                // 么九牌加符
-                if (isYaochu)
-                {
-                    if (count == 4) fu += 16; // 槓子的么九牌額外符數
-                    else fu += 4; // 刻子的么九牌額外符數
-                }
+                // 順子不加符
             }
 
             // 符數進位到10
@@ -267,6 +328,42 @@ namespace MahjongGame
 
             // 最低30符
             return Math.Max(30, fu);
+        }
+
+        // 判斷是否為役牌（自風、場風、三元牌）
+        private bool IsValueTile(string tile)
+        {
+            // 三元牌
+            if (tile == "白" || tile == "發" || tile == "中") return true;
+
+            // 自風牌
+            if (tile == playerWind) return true;
+
+            // 場風牌
+            if (tile == roundWind) return true;
+
+            return false;
+        }
+
+        // 判斷是否為么九牌或字牌
+        private bool IsYaochuOrHonor(string tile)
+        {
+            // 字牌
+            if (tile == "東" || tile == "南" || tile == "西" || tile == "北" ||
+                tile == "白" || tile == "發" || tile == "中") return true;
+
+            // 么九牌
+            if (tile.StartsWith("一") || tile.StartsWith("九")) return true;
+
+            return false;
+        }
+
+        // 判斷是否為刻子
+        private bool IsKotsu(List<string> tiles)
+        {
+            if (tiles.Count < 3) return false;
+            var firstTile = tiles[0].Replace("赤", "");
+            return tiles.All(t => t.Replace("赤", "") == firstTile);
         }
         private int CalculateDoraCount()
         {
@@ -281,8 +378,6 @@ namespace MahjongGame
             }
             return count;
         }
-
-
 
         private int CalculateUraDoraCount()
         {
@@ -383,29 +478,50 @@ namespace MahjongGame
             int yakumanMultiplier = CalculateYakumanMultiplier();
             if (yakumanMultiplier > 0)
             {
-                return 48000 * yakumanMultiplier; // 莊家役滿 * 役滿倍數
+                return 48000 * yakumanMultiplier;
             }
 
             // 累計役滿
             if (han >= 13)
             {
-                return 48000; // 莊家役滿
+                return 48000;
             }
 
-            // 計算基本點數
-            int basePoints = fu * (int)Math.Pow(2, han + 2);
+            // 特殊點數
+            if (han >= 11) return 36000;     // 三倍滿
+            if (han >= 8) return 24000;      // 倍滿
+            if (han >= 6) return 18000;      // 跳滿
+            if (han >= 5 || (han >= 4 && fu >= 40) || (han >= 3 && fu >= 70)) return 12000;      // 滿貫
 
-            // 根據不同的點數上限進行調整
-            if (basePoints >= 2000) // 滿貫
+            Dictionary<(int han, int fu), int> pointTable = new Dictionary<(int han, int fu), int>
+    {
+        // 一番
+        {(1, 30), 1500}, {(1, 40), 2000}, {(1, 50), 2400},
+        {(1, 60), 2900}, {(1, 70), 3400}, {(1, 80), 3900},
+        {(1, 90), 4400}, {(1, 100), 4800}, {(1, 110), 5300},
+        
+        // 二番
+        {(2, 30), 2400}, {(2, 40), 2900}, {(2, 50), 3900},
+        {(2, 60), 4800}, {(2, 70), 5800}, {(2, 80), 6800},
+        {(2, 90), 7700}, {(2, 100), 8700}, {(2, 110), 9600},
+        
+        // 三番
+        {(3, 30), 4800}, {(3, 40), 5800}, {(3, 50), 7700},
+        {(3, 60), 9600}, {(3, 70), 11600},
+        
+        // 四番
+        {(4, 30), 9600}, {(4, 40), 11600}
+    };
+
+            // 查表獲取點數
+            if (pointTable.TryGetValue((han, fu), out int points))
             {
-                if (han >= 11) return 36000; // 莊家三倍滿
-                if (han >= 8) return 24000;  // 莊家倍滿
-                if (han >= 6) return 18000;  // 莊家跳滿
-                return 12000; // 莊家滿貫
+                return points;
             }
 
-            // 其他情況下，計算符數和飜數的點數
-            return basePoints * 6; // 莊家點數
+            // 如果找不到對應的點數，返回0並輸出錯誤訊息
+            Console.WriteLine($"警告：無法找到 {han}番{fu}符 的對應點數");
+            return 0;
         }
 
         private int CalculateYakumanMultiplier()

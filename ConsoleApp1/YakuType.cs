@@ -6,131 +6,166 @@ namespace MahjongGame
 {
     public partial class MahjongGame
     {
+        // 新增全域變數來儲存對子、刻子和順子的數量
+        private static int pairCount = 0;
+        private static int kotsuCount = 0;
+        private static int shuntsuCount = 0;
+
         // 基本和牌型判定（一般型：順子、刻子、雀頭組合）
         public static bool IsBasicWinningHand(List<string> hand)
         {
-            var sortedHand = new List<string>(hand);
+            // 將 "赤" 替換掉
+            var normalizedHand = hand.Select(tile => tile.Replace("赤", "")).ToList();
+
+            // 重置計數器
+            pairCount = 0;
+            kotsuCount = 0;
+            shuntsuCount = 0;
+
+            var sortedHand = new List<string>(normalizedHand);
             sortedHand.Sort();
 
-            for (int i = 0; i < sortedHand.Count - 1; i++)
+            if (!CanFormMentsu(sortedHand))
             {
-                if (sortedHand[i] == sortedHand[i + 1])
+                // Console.WriteLine("基本和牌型失敗-無法組成");
+            }
+            else
+            {
+                if (pairCount == 1 && kotsuCount + shuntsuCount == 4)
                 {
-                    var remainingTiles = new List<string>(sortedHand);
-                    remainingTiles.RemoveAt(i + 1);
-                    remainingTiles.RemoveAt(i);
-
-                    if (CanFormMentsu(remainingTiles))
-                    {
-                        return true;
-                    }
+                    // Console.WriteLine("基本和牌型-滿足ABC x a +  AAA x b + DD");
+                    return true;
+                }
+                else
+                {
+                    // Console.WriteLine($"對子數量: {pairCount}, 刻子數量: {kotsuCount}, 順子數量: {shuntsuCount}");
+                    // Console.WriteLine("基本和牌型失敗-數量不對");
                 }
             }
+            if (IsSpecialWinningHand(sortedHand))
+            {
+                // Console.WriteLine("特殊和牌型");
+                return true;
+            }
+
             return false;
         }
 
-        //private static bool CanFormMentsu(List<string> tiles)
-        //{
-        //    if (tiles.Count == 0) return true;
 
-        //    tiles.Sort();
 
-        //    // 1. 先嘗試順子
-        //    for (int i = 0; i < tiles.Count - 2; i++)
-        //    {
-        //        if (!IsNumberTile(tiles[i])) continue;
+        public static bool IsSpecialWinningHand(List<string> hand)
+        {
+            // 重置計數器
+            // var sortedHand = new List<string>(hand);
+            // sortedHand.Sort();
 
-        //        var (num1, suit1) = GetNumberAndType(tiles[i]);
+            // 檢查七對子
+            if (IsChitoitsuHandler(hand))
+            {
+                return true;
+            }
 
-        //        string tile2 = GetTileString(num1 + 1, suit1);
-        //        string tile3 = GetTileString(num1 + 2, suit1);
+            // 檢查國士無雙
+            if (IsKokushiHandler(hand))
+            {
+                return true;
+            }
+            // 檢查九蓮寶燈
+            if (IsChuurenpoutouHandler(hand))
+            {
+                return true;
+            }
 
-        //        if (tiles.Contains(tile2) && tiles.Contains(tile3))
-        //        {
-        //            var remaining = new List<string>(tiles);
-        //            remaining.Remove(tiles[i]);
-        //            remaining.Remove(tile2);
-        //            remaining.Remove(tile3);
-        //            if (CanFormMentsu(remaining)) return true;
-        //        }
-        //    }
+            return false;
+        }
 
-        //    // 2. 再嘗試刻子
-        //    for (int i = 0; i < tiles.Count - 2; i++)
-        //    {
-        //        if (tiles[i] == tiles[i + 1] && tiles[i + 1] == tiles[i + 2])
-        //        {
-        //            var remaining = new List<string>(tiles);
-        //            remaining.RemoveAt(i + 2);
-        //            remaining.RemoveAt(i + 1);
-        //            remaining.RemoveAt(i);
-        //            if (CanFormMentsu(remaining)) return true;
-        //        }
-        //    }
-
-        //    return false;
-        //}
+        // 是否能組成面子!!
         private static bool CanFormMentsu(List<string> tiles, int recursionLevel = 0)
         {
+            // 空牌組是合法的（遞迴的終止索件）
             if (tiles.Count == 0) return true;
 
-            tiles.Sort();
+            // 排序牌組以便於處理
+            var remainingTiles = new List<string>(tiles);
+            remainingTiles.Sort();
 
-            int sequenceCount = 0;  // 用來計數順子的個數
-            int tripletCount = 0;   // 用來計數刻子的個數
-            string pair = "";       // 用來儲存雀頭（對子）
+            // 輸出當前的遞迴層數和目前牌組（用於調試）
+            // Console.WriteLine(new string(' ', recursionLevel * 2) + $"目前牌組: {string.Join(", ", remainingTiles)}");
 
-            // 輸出當前的遞迴層數和目前牌組
-            Console.WriteLine(new string(' ', recursionLevel * 2) + $"目前牌組: {string.Join(", ", tiles)}");
-
-            // 1. 先嘗試順子
-            for (int i = 0; i < tiles.Count - 2; i++)
+            // 如果只剩兩張牌，檢查是否為對子
+            if (remainingTiles.Count == 2)
             {
-                if (!IsNumberTile(tiles[i])) continue;
+                bool isPair = remainingTiles[0] == remainingTiles[1];
+                if (isPair)
+                {
+                    pairCount++;
+                    // Console.WriteLine(new string(' ', recursionLevel * 2) + $"找到對子: {remainingTiles[0]}");
+                }
+                return isPair;
+            }
 
-                var (num1, suit1) = GetNumberAndType(tiles[i]);
+            // 1. 嘗試刻子
+            for (int i = 0; i < remainingTiles.Count - 2; i++)
+            {
+                if (remainingTiles[i] == remainingTiles[i + 1] &&
+                    remainingTiles[i + 1] == remainingTiles[i + 2])
+                {
+                    kotsuCount++;
+                    var newTiles = new List<string>(remainingTiles);
+                    newTiles.RemoveAt(i + 2);
+                    newTiles.RemoveAt(i + 1);
+                    newTiles.RemoveAt(i);
+
+                    // Console.WriteLine(new string(' ', recursionLevel * 2) + $"找到刻子: {remainingTiles[i]}");
+
+                    if (CanFormMentsu(newTiles, recursionLevel + 1))
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        kotsuCount--;
+                    }
+                }
+            }
+
+            // 2. 嘗試順子（只處理數牌）
+            for (int i = 0; i < remainingTiles.Count; i++)
+            {
+                if (!IsNumberTile(remainingTiles[i])) continue;
+
+                var (num1, suit1) = GetNumberAndType(remainingTiles[i]);
+                if (num1 == 0 || num1 > 7) continue;  // 跳過非數字牌和不可能形成順子的牌
 
                 string tile2 = GetTileString(num1 + 1, suit1);
                 string tile3 = GetTileString(num1 + 2, suit1);
 
-                if (tiles.Contains(tile2) && tiles.Contains(tile3))
+                // 檢查是否有足夠的牌來形成順子
+                var tempTiles = new List<string>(remainingTiles);
+                if (!tempTiles.Remove(remainingTiles[i])) continue;
+                if (!tempTiles.Remove(tile2)) continue;
+                if (!tempTiles.Remove(tile3)) continue;
+
+                shuntsuCount++;
+                var newTiles = new List<string>(tempTiles);
+                // Console.WriteLine(new string(' ', recursionLevel * 2) + $"找到順子: {remainingTiles[i]}, {tile2}, {tile3}");
+
+                if (CanFormMentsu(newTiles, recursionLevel + 1))
                 {
-                    sequenceCount++;
-                    Console.WriteLine(new string(' ', recursionLevel * 2) + $"找到第{sequenceCount}個順子: {tiles[i]}, {tile2}, {tile3}");
-
-                    var remaining = new List<string>(tiles);
-                    remaining.Remove(tiles[i]);
-                    remaining.Remove(tile2);
-                    remaining.Remove(tile3);
-                    if (CanFormMentsu(remaining, recursionLevel + 1)) return true;
-                }
-            }
-
-            // 2. 再嘗試刻子
-            for (int i = 0; i < tiles.Count - 2; i++)
-            {
-                if (tiles[i] == tiles[i + 1] && tiles[i + 1] == tiles[i + 2])
-                {
-                    tripletCount++;
-                    Console.WriteLine(new string(' ', recursionLevel * 2) + $"找到第{tripletCount}個刻子: {tiles[i]}");
-
-                    var remaining = new List<string>(tiles);
-                    remaining.RemoveAt(i + 2);
-                    remaining.RemoveAt(i + 1);
-                    remaining.RemoveAt(i);
-                    if (CanFormMentsu(remaining, recursionLevel + 1)) return true;
-                }
-            }
-
-            // 3. 嘗試尋找雀頭（對子）
-            for (int i = 0; i < tiles.Count - 1; i++)
-            {
-                if (tiles[i] == tiles[i + 1])
-                {
-                    pair = tiles[i];
-                    Console.WriteLine(new string(' ', recursionLevel * 2) + $"找到雀頭（對子）: {pair}");
                     return true;
                 }
+                else
+                {
+                    shuntsuCount--;
+                }
+            }
+
+            // 3. 如果剩餘牌數為2，嘗試形成對子（這是最後的嘗試）
+            if (remainingTiles.Count == 2 && remainingTiles[0] == remainingTiles[1])
+            {
+                pairCount++;
+                // Console.WriteLine(new string(' ', recursionLevel * 2) + $"找到對子: {remainingTiles[0]}");
+                return true;
             }
 
             return false;
@@ -300,10 +335,15 @@ namespace MahjongGame
             return playerHand.All(tile => ContainsYaochu(tile.Replace("赤", "")));
         }
 
+        private static bool IsChitoitsuHandler(List<string> hand)//七對子
+        {
+            var groups = hand.GroupBy(x => x.Replace("赤", ""));
+            return groups.Count() == 7 && groups.All(g => g.Count() == 2);
+        }
+
         private bool IsChitoitsu()//七對子
         {
-            var groups = playerHand.GroupBy(x => x.Replace("赤", ""));
-            return groups.Count() == 7 && groups.All(g => g.Count() == 2);
+            return IsChitoitsuHandler(playerHand);
         }
 
         private bool IsToitoi()//對對和
@@ -392,11 +432,11 @@ namespace MahjongGame
         {
             if (playerHand.Count == 0) return false;
 
-            // 獲取第一張牌的花色（萬、筒、索）
+            // 獲取第一張牌的花色（萬、餅、索）
             string firstTile = playerHand[0].Replace("*", "").Replace("赤", "");
             string suit = "";
             if (firstTile.Contains("萬")) suit = "萬";
-            else if (firstTile.Contains("筒")) suit = "筒";
+            else if (firstTile.Contains("餅")) suit = "餅";
             else if (firstTile.Contains("索")) suit = "索";
             else return false;  // 如果是字牌則不可能是清一色
 
@@ -408,8 +448,7 @@ namespace MahjongGame
             });
         }
 
-        // 役滿判定
-        private bool IsKokushi()//國士無雙
+        private static bool IsKokushiHandler(List<string> hand)//國士無雙
         {
             var yaochus = new HashSet<string>
             {
@@ -417,8 +456,12 @@ namespace MahjongGame
                 "東", "南", "西", "北", "白", "發", "中"
             };
             var handTiles = new HashSet<string>(
-                playerHand.Select(x => x.Replace("赤", "")));
+                hand.Select(x => x.Replace("赤", "")));
             return handTiles.SetEquals(yaochus);
+        }
+        private bool IsKokushi()//國士無雙
+        {
+            return IsKokushiHandler(playerHand);
         }
 
         private bool IsSuuankou()//四暗刻
@@ -531,10 +574,9 @@ namespace MahjongGame
             return kangGroups >= 4;
         }
 
-        private bool IsChuurenpoutou()//九蓮寶燈
+        private static bool IsChuurenpoutouHandler(List<string> hand)//九蓮寶燈
         {
-            if (discardedTiles.Any()) return false;
-            var normalizedHand = playerHand.Select(x => x.Replace("赤", "")).ToList();
+            var normalizedHand = hand.Select(x => x.Replace("赤", "")).ToList();
             string suit = GetSuit(normalizedHand[0]);
             if (string.IsNullOrEmpty(suit)) return false;
 
@@ -549,6 +591,11 @@ namespace MahjongGame
             }
 
             return true;
+        }
+
+        private bool IsChuurenpoutou()//九蓮寶燈
+        {
+            return IsChuurenpoutouHandler(playerHand);
         }
 
         private bool IsJunseiChuurenpoutou()//純正九蓮寶燈
@@ -634,7 +681,7 @@ namespace MahjongGame
             return tile.StartsWith("一") || tile.StartsWith("九") || IsJihai(tile);
         }
 
-        private string GetSuit(string tile)
+        private static string GetSuit(string tile)
         {
             if (tile.EndsWith("萬")) return "萬";
             if (tile.EndsWith("餅")) return "餅";
@@ -692,5 +739,6 @@ namespace MahjongGame
                 .Select(g => g.Key)
                 .ToList();
         }
+
     }
 }

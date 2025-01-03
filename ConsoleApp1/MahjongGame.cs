@@ -18,6 +18,9 @@ namespace MahjongGame
         private List<string> markedTiles = new List<string>(); // 儲存被標記的牌（槓牌組中的三張）
         private List<string> yakumanYakuList; // 役滿役種
         private List<string> initialDoraIndicators = new List<string>();  // 保存初始的寶牌指示牌
+        private string playerWind = "東";  // 玩家永遠是東家
+        private string roundWind;          // 場風（東或南）
+
 
         // 遊戲狀態
         private Random random; // 隨機數生成器
@@ -94,6 +97,9 @@ namespace MahjongGame
             level = 1;
             levelCompleted = false;
 
+            // 決定場風
+            roundWind = random.Next(2) == 0 ? "東" : "南";
+
             deck = new List<string>();
             playerHand = new List<string>();
             doraIndicators = new List<string>();
@@ -106,10 +112,10 @@ namespace MahjongGame
         private void DisplayGameStatus()
         {
             Console.Clear();
-            Console.WriteLine($"\n關卡：{level} - {GetLevelObjective()}");
+            Console.WriteLine($"關卡：{level} - {GetLevelObjective()}");
             Console.WriteLine($"目前點數：{playerPoints}");
             Console.WriteLine($"剩餘牌數：{deck.Count}");
-            Console.WriteLine($"立直狀態：{(isRichi ? "已立直" : "未立直")}");
+            Console.WriteLine("=====================================");
             Console.WriteLine($"槓牌數量：{kangCount}");
 
             // 顯示寶牌指示牌
@@ -130,9 +136,15 @@ namespace MahjongGame
                 Console.WriteLine($"裏寶牌指示牌：{hiddenUraDora}");
             }
 
+            Console.WriteLine("=====================================");
+            Console.WriteLine($"場風：{roundWind}");
+            Console.WriteLine($"自風：{playerWind}");
+            Console.WriteLine("=====================================");
             // 顯示已槓的牌
-            Console.WriteLine("\n已槓牌：" + (kangTiles.Any() ? string.Join(" ", kangTiles) : "無"));
+            Console.WriteLine("已槓牌：" + (kangTiles.Any() ? string.Join(" ", kangTiles) : "無"));
             Console.WriteLine($"聽牌：{(IsTenpai() ? "有" : "無")}");
+            Console.WriteLine($"立直狀態：{(isRichi ? "已立直" : "未立直")}");
+            Console.WriteLine("=====================================");
             // 顯示手牌
             Console.WriteLine("\n目前手牌：");
 
@@ -366,32 +378,32 @@ namespace MahjongGame
             }
         }
         // 新增重置遊戲的方法
-private void ResetGame()
-{
-    // 重新初始化牌山
-    InitializeDeck();
-    ShuffleDeck();
+        private void ResetGame()
+        {
+            // 重新初始化牌山
+            InitializeDeck();
+            ShuffleDeck();
 
-    // 清空手牌和其他牌組
-    playerHand.Clear();
-    discardedTiles.Clear();
-    kangTiles.Clear();
-    winningRecord.Clear();
+            // 清空手牌和其他牌組
+            playerHand.Clear();
+            discardedTiles.Clear();
+            kangTiles.Clear();
+            winningRecord.Clear();
 
-    // 重新發牌
-    DealInitialHand();
+            // 重新發牌
+            DealInitialHand();
 
-    // 使用現有的重置寶牌函式
-    ResetDoraIndicators();
+            // 使用現有的重置寶牌函式
+            ResetDoraIndicators();
 
-    // 重置遊戲狀態
-    isRichi = false;
-    isDoubleRiichi = false;
-    hasWon = false;
-    kangCount = 0;
-    isFirstRound = true;
-    levelCompleted = false;
-}
+            // 重置遊戲狀態
+            isRichi = false;
+            isDoubleRiichi = false;
+            hasWon = false;
+            kangCount = 0;
+            isFirstRound = true;
+            levelCompleted = false;
+        }
         // 新增初始化新關卡的方法
         private void InitializeNewLevel()
         {

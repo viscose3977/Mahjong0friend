@@ -27,8 +27,8 @@ namespace MahjongGame
             // 如果選擇的編號在槓牌組範圍內
             if (index <= totalMarkedTiles)
             {
-                Console.WriteLine("該牌為槓牌組的一部分，不可打出！");
-                Console.WriteLine("按任意鍵繼續...");
+                Console.WriteLine("\n該牌為槓牌組的一部分，不可打出！");
+                Console.WriteLine("\n按任意鍵繼續...");
                 Console.ReadKey();
                 return;
             }
@@ -91,7 +91,7 @@ namespace MahjongGame
                 playerHand.Add(drawnTile);
 
                 Console.WriteLine($"摸到了: {drawnTile}");
-                Console.WriteLine("按任意鍵繼續...");
+                Console.WriteLine("\n按任意鍵繼續...");
                 Console.ReadKey();
             }
             else
@@ -113,17 +113,17 @@ namespace MahjongGame
             // 1. 基本檢查
             if (hasWon)
             {
-                Console.WriteLine("該牌型已和過牌，無法再次立直。");
+                Console.WriteLine("\n該牌型已和過牌，無法再次立直。");
                 Console.WriteLine("請打出至少一張牌後再進行立直。");
-                Console.WriteLine("按任意鍵繼續...");
+                Console.WriteLine("\n按任意鍵繼續...");
                 Console.ReadKey();
                 return;
             }
 
             if (isRichi || isDoubleRiichi)
             {
-                Console.WriteLine("已經立直！");
-                Console.WriteLine("按任意鍵繼續...");
+                Console.WriteLine("\n已經立直！");
+                Console.WriteLine("\n按任意鍵繼續...");
                 Console.ReadKey();
                 return;
             }
@@ -132,7 +132,7 @@ namespace MahjongGame
             if (playerPoints < 1000)
             {
                 Console.WriteLine("點數不足，無法立直！");
-                Console.WriteLine("按任意鍵繼續...");
+                Console.WriteLine("\n按任意鍵繼續...");
                 Console.ReadKey();
                 return;
             }
@@ -153,7 +153,7 @@ namespace MahjongGame
                 Console.WriteLine("請仔細審視手牌，進行罰符4000點！");
                 DeductPoints(4000);
                 Console.WriteLine($"當前點數：{playerPoints}");
-                Console.WriteLine("按任意鍵繼續...");
+                Console.WriteLine("\n按任意鍵繼續...");
                 Console.ReadKey();
                 return;
             }
@@ -167,11 +167,11 @@ namespace MahjongGame
 
             // 6. 顯示結果
             if (isDoubleRiichi)
-                Console.WriteLine("兩立直成功！");
+                Console.WriteLine("\n兩立直成功！押下1000立直點");
             else
-                Console.WriteLine("立直成功！");
+                Console.WriteLine("\n立直成功！押下1000立直點");
             Console.WriteLine($"當前點數：{playerPoints}");
-            Console.WriteLine("按任意鍵繼續...");
+            Console.WriteLine("\n按任意鍵繼續...");
             Console.ReadKey();
         }
         private void DeductPoints(int points)
@@ -202,7 +202,7 @@ namespace MahjongGame
                 Console.WriteLine("詐槓！請仔細審視手牌，進行罰符4000點！");
                 DeductPoints(4000);
                 Console.WriteLine($"當前點數：{playerPoints}");
-                Console.WriteLine("按任意鍵繼續...");
+                Console.WriteLine("\n按任意鍵繼續...");
                 Console.ReadKey();
                 return;
             }
@@ -258,7 +258,7 @@ namespace MahjongGame
             Console.WriteLine("無役詐和！請仔細審視手牌，進行罰符罰分4000點！");
             DeductPoints(4000);
             Console.WriteLine($"當前點數：{playerPoints}");
-            Console.WriteLine("按任意鍵繼續...");
+            Console.WriteLine("\n按任意鍵繼續...");
             Console.ReadKey();
         }
 
@@ -310,9 +310,9 @@ namespace MahjongGame
         {
             if (hasWon)
             {
-                Console.WriteLine("該牌型已和過牌，無法再次和牌。");
+                Console.WriteLine("\n該牌型已和過牌，無法再次和牌。");
                 Console.WriteLine("請打出至少一張牌後，再進行和牌。");
-                Console.WriteLine("按任意鍵繼續...");
+                Console.WriteLine("\n按任意鍵繼續...");
                 Console.ReadKey();
                 return;
             }
@@ -341,7 +341,6 @@ namespace MahjongGame
             hasWon = true;
 
 
-            // 5. 計算分數
             int yakumanMultiplier = CalculateYakumanMultiplier();
             int basePoints = yakumanMultiplier > 0 ?
                 48000 * yakumanMultiplier :
@@ -355,6 +354,9 @@ namespace MahjongGame
                 richiPoints = 1000 * richiCount;
                 points += richiPoints;
             }
+
+            // 更新玩家點數
+            playerPoints += points;  // 加上總點數（包含和牌點數和立直返還）
             // 7. 顯示和牌結果
             if (yakumanMultiplier > 0)
             {
@@ -372,11 +374,8 @@ namespace MahjongGame
                 {
                     Console.WriteLine("\n=== 裏寶牌指示牌 ===");
 
-                    // 根據槓的數量來決定顯示幾張裏寶牌（初始1張 + 每槓1次加1張）
-                    int visibleCount = 1 + kangCount;
-
-                    // 顯示對應數量的裏寶牌
-                    var visibleUraDora = uraDoraIndicators.Take(visibleCount);
+                    // 計算遊戲介面上顯示的裏寶牌井字號數量（應該是1張）
+                    var visibleUraDora = uraDoraIndicators.Take(1);  // 只取第一張
                     Console.WriteLine(string.Join(", ", visibleUraDora));
                     Console.WriteLine("==================");
                 }
@@ -396,130 +395,137 @@ namespace MahjongGame
                 // 如果是立直，顯示裏寶牌
                 if (isRichi || isDoubleRiichi)
                 {
-                    Console.WriteLine("\n=== 裏寶牌指示牌 ===");
-                    var visibleUraDora = uraDoraIndicators.Take(doraIndicators.Count).ToList();
-                    Console.WriteLine(string.Join(", ", visibleUraDora));
-                    Console.WriteLine("==================");
+                    if (isRichi || isDoubleRiichi)
+                    {
+                        Console.WriteLine("\n=== 裏寶牌指示牌 ===");
+
+                        // 根據遊戲介面顯示的#數量來顯示裏寶牌
+                        // 初始為1張，每槓一次加1張
+                        int visibleCount = 1 + kangCount;
+                        var visibleUraDora = uraDoraIndicators.Take(visibleCount);
+                        Console.WriteLine(string.Join(", ", visibleUraDora));
+                        Console.WriteLine("==================");
+                    }
+                    Console.Write("\n總計 ");
+                    string rankName = GetHandRank(yakuList.Sum(y => y.value), CalculateFu());
+                    if (!string.IsNullOrEmpty(rankName))
+                    {
+                        Console.Write($"{rankName} ");
+                    }
+                    Console.WriteLine($"{yakuList.Sum(y => y.value)}番{CalculateFu()}符");
                 }
-                Console.Write("\n總計 ");
-                string rankName = GetHandRank(yakuList.Sum(y => y.value), CalculateFu());
-                if (!string.IsNullOrEmpty(rankName))
+                // 8.顯示點數資訊
+                Console.WriteLine($"\n獲得 {basePoints}點");  // 只顯示和牌獲得的基本點數
+                if (richiPoints > 0)
                 {
-                    Console.Write($"{rankName} ");
+                    Console.WriteLine($"歸還立直點 {richiPoints}點");
                 }
-                Console.WriteLine($"{yakuList.Sum(y => y.value)}番{CalculateFu()}符");
-            }
-            // 8.顯示點數資訊
-            Console.WriteLine($"\n獲得 {points}點");
-            if (richiPoints > 0)
-            {
-                Console.WriteLine($"歸還立直點 {richiPoints}點");
-            }
-            Console.WriteLine($"目前共有 {playerPoints}點\n");
+                Console.WriteLine($"目前共有 {playerPoints}點\n");
 
-            // 9. 記錄和牌資訊
-            string record = "和牌 - ";
-            if (yakumanMultiplier > 0)
-            {
-                string multiplierText = yakumanMultiplier > 1 ? $"{yakumanMultiplier}倍" : "";
-                record += $"{multiplierText}役滿 {string.Join(" ", yakumanYakuList)}";
-            }
-            else
-            {
-                string rankName = GetHandRank(yakuList.Sum(y => y.value), CalculateFu());
-                if (!string.IsNullOrEmpty(rankName))
+                // 9. 記錄和牌資訊
+                string record = "和牌 - ";
+                if (yakumanMultiplier > 0)
                 {
-                    record += $"{rankName} ";
+                    string multiplierText = yakumanMultiplier > 1 ? $"{yakumanMultiplier}倍" : "";
+                    record += $"{multiplierText}役滿 {string.Join(" ", yakumanYakuList)}";
                 }
-                record += $"{yakuList.Sum(y => y.value)}番{CalculateFu()}符";
-            }
-            record += $", 獲得：{points}點";
-            winningRecord.Add(record);
-
-            // 10.顯示關卡資訊
-            Console.WriteLine($"本關{GetLevelObjective()}");
-            Console.WriteLine("本關和牌紀錄：");
-            if (winningRecord.Any())
-            {
-                foreach (var previousRecord in winningRecord)
+                else
                 {
-                    Console.WriteLine(previousRecord);
+                    string rankName = GetHandRank(yakuList.Sum(y => y.value), CalculateFu());
+                    if (!string.IsNullOrEmpty(rankName))
+                    {
+                        record += $"{rankName} ";
+                    }
+                    record += $"{yakuList.Sum(y => y.value)}番{CalculateFu()}符";
                 }
-            }
-            else
-            {
-                Console.WriteLine("無");
-            }
+                record += $", 獲得：{points}點";
+                winningRecord.Add(record);
 
-
-            // 11. 檢查關卡完成
-            if (!levelCompleted)
-            {
-                levelCompleted = CheckLevelComplete(yakuList.Sum(y => y.value), CalculateFu());
-            }
-
-            // 如果還是沒達成通關條件
-            if (!levelCompleted)
-            {
-                Console.WriteLine("\n未達成通關條件，遊戲繼續。");
-                isRichi = false;
-                isDoubleRiichi = false;
-                hasWon = true;
-                richiCount = 0;
-                ResetDoraIndicators();  // 重置寶牌指示牌順序
-                Console.WriteLine("\n按任意鍵繼續...");
-                Console.ReadKey();
-                return;
-            }
-
-            // 達成通關條件後的處理
-            if (level == 6)  // 在第六關
-            {
-                Console.WriteLine("\n已達成通關條件，是否繼續留在本關卡？(Y/N)");
-                string choice = Console.ReadLine().ToUpper();
-
-                if (choice == "Y")
+                // 10.顯示關卡資訊
+                Console.WriteLine($"本關{GetLevelObjective()}");
+                Console.WriteLine("本關和牌紀錄：");
+                if (winningRecord.Any())
                 {
+                    foreach (var previousRecord in winningRecord)
+                    {
+                        Console.WriteLine(previousRecord);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("無");
+                }
+
+
+                // 11. 檢查關卡完成
+                if (!levelCompleted)
+                {
+                    levelCompleted = CheckLevelComplete(yakuList.Sum(y => y.value), CalculateFu());
+                }
+
+                // 如果還是沒達成通關條件
+                if (!levelCompleted)
+                {
+                    Console.WriteLine("\n未達成通關條件，遊戲繼續。");
                     isRichi = false;
                     isDoubleRiichi = false;
                     hasWon = true;
                     richiCount = 0;
-                    ResetDoraIndicators();
-                    return;
-                }
-                else
-                {
-                    ShowGameClearScreen();  // 顯示通關畫面
-                }
-            }
-            else  // 其他關卡
-            {
-                Console.WriteLine("\n已達成通關條件，是否繼續留在本關卡？(Y/N)");
-                string choice = Console.ReadLine().ToUpper();
-
-                if (choice == "Y")
-                {
-                    isRichi = false;
-                    isDoubleRiichi = false;
-                    hasWon = true;
-                    richiCount = 0;
-                    ResetDoraIndicators();
-                    return;
-                }
-
-                Console.WriteLine("\n是否進入下一關卡？(Y/N)");
-                choice = Console.ReadLine().ToUpper();
-
-                if (choice == "Y")
-                {
-                    level++; // 進入下一關
-                    ResetGame();
-                }
-                else
-                {
-                    Console.WriteLine("\n感謝遊玩，即將退出遊戲...");
+                    ResetDoraIndicators();  // 重置寶牌指示牌順序
+                    Console.WriteLine("\n按任意鍵繼續...");
                     Console.ReadKey();
-                    Environment.Exit(0);
+                    return;
+                }
+
+                // 達成通關條件後的處理
+                if (level == 6)  // 在第六關
+                {
+                    Console.WriteLine("\n已達成通關條件，是否繼續留在本關卡？(Y/N)");
+                    string choice = Console.ReadLine().ToUpper();
+
+                    if (choice == "Y")
+                    {
+                        isRichi = false;
+                        isDoubleRiichi = false;
+                        hasWon = true;
+                        richiCount = 0;
+                        ResetDoraIndicators();
+                        return;
+                    }
+                    else
+                    {
+                        ShowGameClearScreen();  // 顯示通關畫面
+                    }
+                }
+                else  // 其他關卡
+                {
+                    Console.WriteLine("\n已達成通關條件，是否繼續留在本關卡？(Y/N)");
+                    string choice = Console.ReadLine().ToUpper();
+
+                    if (choice == "Y")
+                    {
+                        isRichi = false;
+                        isDoubleRiichi = false;
+                        hasWon = true;
+                        richiCount = 0;
+                        ResetDoraIndicators();
+                        return;
+                    }
+
+                    Console.WriteLine("\n是否進入下一關卡？(Y/N)");
+                    choice = Console.ReadLine().ToUpper();
+
+                    if (choice == "Y")
+                    {
+                        level++; // 進入下一關
+                        ResetGame();
+                    }
+                    else
+                    {
+                        Console.WriteLine("\n感謝遊玩，即將退出遊戲...");
+                        Console.ReadKey();
+                        Environment.Exit(0);
+                    }
                 }
             }
         }
