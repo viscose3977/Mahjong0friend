@@ -79,50 +79,6 @@ namespace MahjongGame
             return false;
         }
 
-        
-
-        //private static bool CanFormMentsu(List<string> tiles)
-        //{
-        //    if (tiles.Count == 0) return true;
-
-        //    tiles.Sort();
-
-        //    // 1. 先嘗試順子
-        //    for (int i = 0; i < tiles.Count - 2; i++)
-        //    {
-        //        if (!IsNumberTile(tiles[i])) continue;
-
-        //        var (num1, suit1) = GetNumberAndType(tiles[i]);
-
-        //        string tile2 = GetTileString(num1 + 1, suit1);
-        //        string tile3 = GetTileString(num1 + 2, suit1);
-
-        //        if (tiles.Contains(tile2) && tiles.Contains(tile3))
-        //        {
-        //            var remaining = new List<string>(tiles);
-        //            remaining.Remove(tiles[i]);
-        //            remaining.Remove(tile2);
-        //            remaining.Remove(tile3);
-        //            if (CanFormMentsu(remaining)) return true;
-        //        }
-        //    }
-
-        //    // 2. 再嘗試刻子
-        //    for (int i = 0; i < tiles.Count - 2; i++)
-        //    {
-        //        if (tiles[i] == tiles[i + 1] && tiles[i + 1] == tiles[i + 2])
-        //        {
-        //            var remaining = new List<string>(tiles);
-        //            remaining.RemoveAt(i + 2);
-        //            remaining.RemoveAt(i + 1);
-        //            remaining.RemoveAt(i);
-        //            if (CanFormMentsu(remaining)) return true;
-        //        }
-        //    }
-
-        //    return false;
-        //}
-        // 是否能組成面子!!
         private static bool CanFormMentsu(List<string> tiles, int recursionLevel = 0)
         {
             // 空牌組是合法的（遞迴的終止索件）
